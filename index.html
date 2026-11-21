@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.6.6
+  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.6.7
   ================================================================
   文件结构索引
     style 区块
@@ -45,7 +45,30 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#0b0b14" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="mobile-web-app-capable" content="yes" />
 <title>Liquid Glass · 设置</title>
+<script>
+  /* 首帧前把页面底色与状态栏颜色对齐主题，避免刘海/安全区先闪一块黑 */
+  (function(){
+    try{
+      var raw = localStorage.getItem('lgSettingsV4');
+      var c = raw ? JSON.parse(raw) : null;
+      var t = (c && c.theme) || 'dark';
+      var light = t === 'light' || (t === 'auto' && window.matchMedia &&
+                    window.matchMedia('(prefers-color-scheme: light)').matches);
+      var bg = light ? '#f8f9fd' : '#0b0b14';
+      document.documentElement.style.background = bg;
+      document.documentElement.setAttribute('data-theme-base', light ? 'light' : 'dark');
+      var m = document.createElement('meta');
+      m.name = 'theme-color'; m.content = bg;
+      document.head.appendChild(m);
+      var old = document.querySelector('meta[name="theme-color"]');
+      if(old) old.parentNode.removeChild(old);
+    }catch(e){}
+  })();
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;background:transparent;}
@@ -365,13 +388,14 @@ body.sheet-open .toast{bottom:auto;top:calc(50% - 26px);}
   border-top:1px solid rgba(255,255,255,.12);
   color:#fff;will-change:transform;
   max-height:82vh;overflow-y:auto;overscroll-behavior:contain;
+  visibility:hidden;pointer-events:none;
 }
 body.light .sheet{background:rgba(248,248,250,.94);color:#1c1c1e;border-top-color:rgba(0,0,0,.1);}
 body.light .sheet .field input{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.12);}
 body.light .sheet .pill-btn{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.12);}
 body.light .sheet .btn.ghost{background:rgba(0,0,0,.06);}
 body.light .sheet .sheet-grab{background:rgba(0,0,0,.18);}
-.sheet.show{transform:translateY(0);}
+.sheet.show{transform:translateY(0);visibility:visible;pointer-events:auto;}
 
 .sheet-grab{width:36px;height:4px;border-radius:999px;background:rgba(255,255,255,.22);margin:2px auto 10px;}
 .sheet-close{
@@ -571,7 +595,7 @@ body{touch-action:manipulation;}
 body.kb-open .dlg.show{
   transform:translate(-50%, calc(-50% - var(--kb, 0px) / 2)) scale(1);
 }
-body.kb-open .sheet{
+body.kb-open .sheet.show{
   bottom:var(--kb, 0px);
   max-height:calc(100vh - var(--kb, 0px) - 12px);
   max-height:calc(100dvh - var(--kb, 0px) - 12px);
@@ -964,7 +988,7 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
     <!-- 关于 -->
     <div class="group-title">关于</div>
     <div class="liquid-glass card">
-      <div class="row"><span class="row-label">版本</span><span class="row-val">1.6.6</span></div>
+      <div class="row"><span class="row-label">版本</span><span class="row-val">1.6.7</span></div>
       <div class="row"><span class="row-label">可调配置项</span><span class="row-val" id="conf-count">—</span></div>
       <div class="row tap" id="btn-privacy"><span class="row-label">隐私政策</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
       <div class="row tap" id="btn-terms"><span class="row-label">用户协议</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
@@ -1843,7 +1867,7 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
 
   function openProfile(){
     /* 滑动手势刚结束时浏览器可能补发一次 click，这里直接忽略 */
-    if(Date.now() < clickBlockUntil || Date.now() - lastScrollAt < 300) return;
+    if(Date.now() < clickBlockUntil) return;
     pendingAvatar = profile.avatar;
     inName.value = profile.name;
     inMail.value = profile.email;
@@ -2583,7 +2607,7 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
       if(Math.abs(e.touches[0].clientY - st.y) > 14 || Math.abs(e.touches[0].clientX - st.x) > 14) st.moved = true;
     }, { passive:true });
     window.addEventListener('touchend', function(){
-      if(st.moved) clickBlockUntil = Date.now() + 350;
+      if(st.moved) clickBlockUntil = Date.now() + 450;
     }, { passive:true });
     document.addEventListener('click', function(e){
       if(Date.now() < clickBlockUntil){
