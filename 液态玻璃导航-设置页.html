@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#000000" />
+<title>Liquid Glass · 设置</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:transparent;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Segoe UI",sans-serif;
+  background:transparent;color:#fff;
+  transition:color .3s;
+  overflow-x:hidden;
+}
+body.light{color:#1c1c1e;}
+
+/* ================= 壁纸背景层 ================= */
+.wallpaper{
+  position:fixed;inset:0;z-index:-2;
+  background-position:center;
+  background-size:cover;
+  background-repeat:no-repeat;
+  filter:blur(var(--wall-blur,0px));
+  transform:scale(1.06);
+  transition:filter .25s;
+}
+.wall-dim{
+  position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:#000;
+  transition:background .3s;
+}
+body.light .wall-dim{background:#f2f2f6;}
+body.has-wall .wall-dim{background:rgba(0,0,0,var(--wall-dim-a,.35));}
+body.has-wall.light .wall-dim{background:rgba(255,255,255,var(--wall-dim-a,.35));}
+
+/* ================= 全局液态玻璃变量 ================= */
+:root{
+  --lg-blur:28px;
+  --lg-opacity:.35;
+  --lg-saturation:120%;
+  --lg-tint:90,90,90;
+  --lg-tint-light:250,250,252;
+  --lg-border-a:.10;
+  --lg-highlight:.55;
+  --lg-shadow:.32;
+  --lg-grain:.12;
+  --lg-chroma:0;
+  --lg-chroma-a:0;
+  --wall-blur:0px;
+  --wall-dim-a:.35;
+  --lg-line:rgba(255,255,255,.08);
+  --indicator-color:rgba(50,140,255,.32);
+  --indicator-strong:rgba(50,140,255,.8);
+  --text-normal:#fff;
+  --text-active:#64a8ff;
+  --thumb-on:#3b8cff;
+  --bar-radius:999px;
+  --bar-bottom:16px;
+  --bar-gap:12px;
+  --card-radius:20px;
+  --tab-icon:26px;
+  --ind-anim:all .32s cubic-bezier(.34,1.56,.64,1);
+}
+body.light{
+  --lg-line:rgba(0,0,0,.07);
+  --text-normal:#1c1c1e;
+  --text-active:#0a6fdc;
+}
+
+/* ================= 通用玻璃容器 ================= */
+.liquid-glass{
+  position:relative;overflow:hidden;
+  background:rgba(var(--lg-tint),var(--lg-opacity));
+  backdrop-filter:blur(var(--lg-blur)) saturate(var(--lg-saturation));
+  -webkit-backdrop-filter:blur(var(--lg-blur)) saturate(var(--lg-saturation));
+  border:1px solid rgba(255,255,255,var(--lg-border-a));
+  border-radius:var(--card-radius);
+  box-shadow:
+    inset calc(var(--lg-chroma) * 1px) 0 calc(var(--lg-chroma) * 1.2px) rgba(255,70,110,var(--lg-chroma-a)),
+    inset calc(var(--lg-chroma) * -1px) 0 calc(var(--lg-chroma) * 1.2px) rgba(70,200,255,var(--lg-chroma-a)),
+    inset 0 1px 0 rgba(255,255,255,var(--lg-highlight)),
+    0 12px 30px -12px rgba(0,0,0,var(--lg-shadow));
+  transition:background .25s,border-color .25s,box-shadow .25s;
+}
+
+/* 双层玻璃背板：内嵌薄壳环 */
+.liquid-glass::before{
+  content:'';position:absolute;inset:4px;pointer-events:none;
+  border-radius:calc(var(--card-radius) - 4px);
+  border:1px solid rgba(255,255,255,calc(var(--lg-border-a) * .8));
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.03),
+    inset 0 6px 12px -8px rgba(255,255,255,calc(var(--lg-highlight) * .9));
+  opacity:0;
+  transition:opacity .25s;
+}
+body.light .liquid-glass::before{
+  border-color:rgba(0,0,0,calc(var(--lg-border-a) * .8));
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.02),
+    inset 0 6px 12px -8px rgba(255,255,255,.9);
+}
+body.double-layer .liquid-glass::before{opacity:1;}
+
+/* 导航胶囊的背板圆角跟随胶囊半径 */
+.glass-capsule.liquid-glass{border-radius:var(--bar-radius);}
+.glass-capsule.liquid-glass::before{border-radius:calc(var(--bar-radius) - 4px);}
+body.light .liquid-glass{
+  background:rgba(var(--lg-tint-light),calc(var(--lg-opacity) + .2));
+  border-color:rgba(0,0,0,var(--lg-border-a));
+}
+
+/* 噪点颗粒层 */
+.liquid-glass::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  border-radius:inherit;
+  opacity:var(--lg-grain);
+  mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:120px 120px;
+}
+
+/* ================= 页面容器 ================= */
+main{min-height:100%;padding:0 16px calc(130px + env(safe-area-inset-bottom));}
+.view{display:none;animation:fade .28s ease;}
+.view.active{display:block;}
+@keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+.page-head{padding:34px 4px 14px;}
+.page-head h1{font-size:30px;font-weight:700;letter-spacing:-.6px;}
+.page-sub{margin-top:6px;font-size:13px;opacity:.55;}
+
+/* ================= 账户卡片 ================= */
+.account-card{display:flex;align-items:center;gap:14px;padding:16px 18px;margin-bottom:8px;cursor:pointer;transition:transform .2s;}
+.account-card:active{transform:scale(.985);}
+.avatar{
+  width:52px;height:52px;flex:0 0 auto;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:600;letter-spacing:.5px;color:#fff;
+  background:linear-gradient(145deg,#5b9dff,#8b5cff 55%,#ff6ec7);
+  box-shadow:0 6px 16px rgba(80,120,255,.35);
+}
+.account-info{flex:1;min-width:0;}
+.account-name{font-size:16px;font-weight:600;}
+.account-mail{font-size:12.5px;opacity:.55;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.chev{width:18px;height:18px;flex:0 0 auto;opacity:.4;}
+.chev path{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+
+/* ================= 分组 ================= */
+.group-title{font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;opacity:.45;padding:0 6px 8px;margin-top:18px;}
+.card{overflow:hidden;margin-bottom:4px;}
+
+/* ================= 列表行 ================= */
+.row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 18px;min-height:52px;font-size:var(--fs-row,15px);transition:background .2s;}
+.row + .row{border-top:1px solid var(--lg-line);}
+.row.tap{cursor:pointer;}
+.row.tap:active{background:rgba(255,255,255,.06);}
+body.light .row.tap:active{background:rgba(0,0,0,.04);}
+.row-label{flex:1;min-width:0;}
+.row-val{font-size:13px;opacity:.5;font-variant-numeric:tabular-nums;}
+.row.center{justify-content:center;}
+.danger{color:#ff5f57;font-weight:500;}
+body.light .danger{color:#e0322a;}
+.row.block{display:block;padding:14px 18px 12px;}
+.row-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:14.5px;}
+.row-head .row-val{font-size:12.5px;}
+
+/* ================= 分段控件 ================= */
+.segmented{position:relative;display:flex;padding:3px;border-radius:12px;background:rgba(120,120,120,.22);}
+body.light .segmented{background:rgba(0,0,0,.07);}
+.seg-thumb{
+  position:absolute;top:3px;left:3px;height:calc(100% - 6px);
+  background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:10px;
+  transition:left .28s cubic-bezier(.34,1.4,.64,1);
+  pointer-events:none;
+}
+body.light .seg-thumb{background:#fff;border-color:rgba(0,0,0,.06);box-shadow:0 2px 6px rgba(0,0,0,.1);}
+.seg-item{flex:1;position:relative;z-index:2;text-align:center;padding:8px 0;font-size:13.5px;font-weight:500;opacity:.6;cursor:pointer;transition:opacity .2s;}
+.seg-item.active{opacity:1;font-weight:600;}
+
+/* ================= 开关 ================= */
+.switch{width:50px;height:30px;flex:0 0 auto;border-radius:999px;position:relative;background:rgba(120,120,120,.32);cursor:pointer;transition:background .25s;}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:left .25s cubic-bezier(.34,1.4,.64,1);}
+.switch.on{background:var(--thumb-on,#3b8cff);}
+.switch.on::after{left:23px;}
+
+/* ================= 滑块 ================= */
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:26px;background:transparent;outline:none;cursor:pointer;}
+input[type="range"]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:rgba(120,120,120,.3);}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;margin-top:-10px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.28);}
+input[type="range"]::-moz-range-track{height:4px;border-radius:2px;background:rgba(120,120,120,.3);}
+input[type="range"]::-moz-range-thumb{width:22px;height:22px;border:none;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.28);}
+
+input[type="color"]{-webkit-appearance:none;appearance:none;width:46px;height:30px;border:1px solid var(--lg-line);border-radius:9px;background:transparent;padding:0;cursor:pointer;}
+input[type="color"]::-webkit-color-swatch-wrapper{padding:3px;}
+input[type="color"]::-webkit-color-swatch{border:none;border-radius:6px;}
+
+/* 壁纸预设色块 */
+.swatches{display:flex;gap:9px;}
+.swatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:1.5px solid rgba(255,255,255,.18);transition:transform .18s,border-color .18s,box-shadow .18s;}
+.swatch:active{transform:scale(.9);}
+.swatch.active{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.25);}
+body.light .swatch.active{border-color:#333;box-shadow:0 0 0 2px rgba(0,0,0,.18);}
+
+/* ================= 占位视图 ================= */
+.plain-card{padding:18px;margin-bottom:12px;}
+.plain-card h3{font-size:16px;margin-bottom:8px;}
+.plain-card p{font-size:13.5px;line-height:1.7;opacity:.6;}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.app-tile{aspect-ratio:1/1;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;cursor:pointer;background:linear-gradient(150deg,rgba(90,150,255,.28),rgba(150,90,255,.22));}
+.search-input{display:flex;align-items:center;gap:8px;padding:12px 16px;margin-bottom:14px;}
+.search-input svg{width:18px;height:18px;opacity:.5;flex:0 0 auto;}
+.search-input input{flex:1;border:none;background:transparent;outline:none;color:var(--text-normal);font-size:15px;}
+.search-input input::placeholder{opacity:.4;}
+
+/* ================= 底部导航 ================= */
+.tabbar-wrap{
+  position:fixed;left:50%;bottom:var(--bar-bottom);
+  transform:translateX(-50%);
+  display:flex;align-items:center;gap:var(--bar-gap);
+  z-index:99;padding-bottom:env(safe-area-inset-bottom);
+  transition:transform .35s cubic-bezier(.34,1.2,.64,1),opacity .35s;
+}
+.tabbar-wrap.hidden{transform:translateX(-50%) translateY(140%);opacity:0;}
+
+.glass-capsule{padding:6px;display:flex;gap:4px;border-radius:var(--bar-radius);}
+.glass-capsule.solo{padding:10px;}
+
+.indicator{
+  position:absolute;top:6px;left:6px;height:calc(100% - 12px);
+  background:var(--indicator-color);
+  border:1.5px solid transparent;
+  border-radius:var(--bar-radius);
+  transition:var(--ind-anim);
+  pointer-events:none;z-index:1;
+}
+.indicator.ring{background:transparent;border-color:var(--indicator-strong);}
+
+.tab-item{
+  position:relative;z-index:2;min-width:var(--tab-min,72px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  padding:8px 4px;font-size:var(--fs-tab,13px);color:var(--text-normal);
+  cursor:pointer;user-select:none;
+  transition:color .2s,transform .15s,padding .2s,min-width .2s;
+}
+.tab-item:active{transform:scale(.94);}
+.tab-item.solo{min-width:44px;}
+.tab-item svg{width:var(--tab-icon);height:var(--tab-icon);fill:currentColor;transition:width .2s,height .2s,transform .25s;}
+.tab-item.active{color:var(--text-active);}
+body.active-scale .tab-item.active svg{transform:scale(1.12);}
+body.perf .liquid-glass{
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+  background:rgba(var(--lg-tint),calc(var(--lg-opacity) + .42));
+}
+body.perf.light .liquid-glass{
+  background:rgba(var(--lg-tint-light),calc(var(--lg-opacity) + .5));
+}
+
+body.no-label .tab-item{min-width:54px;padding:10px 4px;}
+body.no-label .tab-item span{display:none;}
+
+/* ================= Toast ================= */
+.toast{
+  position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));
+  transform:translateX(-50%) translateY(10px) scale(.96);
+  padding:11px 20px;border-radius:999px;font-size:13.5px;white-space:nowrap;
+  background:rgba(40,40,40,.82);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,.12);
+  color:#fff;z-index:300;opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
+
+.foot-note{text-align:center;font-size:11.5px;opacity:.35;margin:24px 0 10px;}
+</style>
+</head>
+<body>
+
+<div class="wallpaper" id="wallpaper"></div>
+<div class="wall-dim" id="wall-dim"></div>
+
+<main>
+  <!-- ===== 视图：源 ===== -->
+  <section class="view" data-view="source">
+    <div class="page-head"><h1>源</h1><p class="page-sub">订阅源与更新</p></div>
+    <div class="liquid-glass plain-card">
+      <h3>今日更新</h3>
+      <p>共 3 条新内容，来自 2 个订阅源。可在「设置」中调整玻璃材质的着色、高光与噪点。</p>
+    </div>
+    <div class="liquid-glass plain-card">
+      <h3>已订阅</h3>
+      <p>Design Notes · iOS HIG 每周精选 · SwiftUI Weekly</p>
+    </div>
+  </section>
+
+  <!-- ===== 视图：App ===== -->
+  <section class="view" data-view="app">
+    <div class="page-head"><h1>App</h1><p class="page-sub">已安装应用</p></div>
+    <div class="grid">
+      <div class="liquid-glass app-tile">笔记</div>
+      <div class="liquid-glass app-tile">相册</div>
+      <div class="liquid-glass app-tile">日历</div>
+      <div class="liquid-glass app-tile">天气</div>
+      <div class="liquid-glass app-tile">音乐</div>
+      <div class="liquid-glass app-tile">文件</div>
+      <div class="liquid-glass app-tile">地图</div>
+      <div class="liquid-glass app-tile">健康</div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：模块 ===== -->
+  <section class="view" data-view="module">
+    <div class="page-head"><h1>模块</h1><p class="page-sub">功能模块管理</p></div>
+    <div class="liquid-glass plain-card">
+      <h3>快捷指令</h3>
+      <p>创建自动化流程，把常用操作打包成一键执行。</p>
+    </div>
+    <div class="liquid-glass plain-card">
+      <h3>小组件</h3>
+      <p>添加桌面小组件，随时查看关键数据。</p>
+    </div>
+  </section>
+
+  <!-- ===== 视图：设置 ===== -->
+  <section class="view" data-view="settings">
+    <div class="page-head"><h1>设置</h1><p class="page-sub">液态玻璃外观与通用偏好</p></div>
+
+    <div class="liquid-glass account-card" id="account-card">
+      <div class="avatar">JD</div>
+      <div class="account-info">
+        <div class="account-name">John Doe</div>
+        <div class="account-mail">john.doe@example.com</div>
+      </div>
+      <svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+    </div>
+
+    <!-- 显示 -->
+    <div class="group-title">显示</div>
+    <div class="liquid-glass card">
+      <div class="row block">
+        <div class="row-head"><span>显示模式</span></div>
+        <div class="segmented" id="seg-theme">
+          <div class="seg-thumb"></div>
+          <div class="seg-item" data-theme="dark">深色</div>
+          <div class="seg-item" data-theme="light">浅色</div>
+          <div class="seg-item" data-theme="auto">跟随系统</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 玻璃材质 -->
+    <div class="group-title">玻璃材质</div>
+    <div class="liquid-glass card">
+      <div class="row">
+        <span class="row-label">玻璃着色</span>
+        <input type="color" id="c-tint" />
+      </div>
+      <div class="row block">
+        <div class="row-head"><span>基底透明度</span><span class="row-val" id="val-opacity">0.35</span></div>
+        <input type="range" id="r-opacity" min="0.05" max="0.7" step="0.01" />
+      </div>
+      <div class="row block">
+        <div class="row-head"><span>模糊强度</span><span class="row-val" id="val-blur">28 px</span></div>
+        <input type="range" id="r-blur" min="8" max="48" step="1" />
+      </div>
+      <div class="row block">
+        <div class="row-head"><span>饱和度</span><span class="row-val" id="val-sat">120 %</span></div>
+        <input type="range" id="r-sat" min="80" max="200" step="1" />
+      </div>
+      <div class="row block">
+        <div class="row-head"><span>边框强度</span><span class="row-val" id="val-border">0.10</span></div>
+        <input type="range" id="r-border" min="0" max="0.4" step="0.01" />
+      </div>
+      <div class="row block">
+        <div class="row-head"><span>内高光</span><span class="row-val" id="val-highlight">0.55</span></div>
+        <input type="range" id="r-highlight" min="0" max="1" step="0.01" />
+      </div>
+      <div class="row block">
+        <div class="row-head"><span>模糊色散（RGB 分离）</span><span class="row-val" id="val-chroma">0.0</span></div>
+        <input type="range" id="r-chroma" min="0" max="6" step="0.5" />
+      </div>
+      <div class="row block">
+        <div class="row-head"><span>噪点颗粒</span><span class="row-val" id="val-grain">0.12</span></div>
+        <input type="range" id="r-grain" min="0" max="0.4" step="0.01" />
+      </div>
+      <div class="row block">
+        <div class="row-head"><span>投影强度</span><span class="row-val" id="val-shadow">0.32</span></div>
+        <input type="range" id="r-shadow" min="0" max="0.8" step="0.01" />
+      </div>
+    </div>
+
+    <!-- 布局 -->
+    <div class="group-title">布局</div>
+    <div class="liquid-glass card">
+      <div class="row block">
+        <div class="row-head"><span>胶囊圆角</span><span class="row-val" id="val-radius">999 px</span></div>
+        <input type="range" id="r-radius" min="8" max="999" step="1" />
+      </div>
+      <div class="row block">
+        <div class="row-head"><span>卡片圆角</span><span class="row-val" id="val-card-radius">20 px</span></div>
+        <input type="range" id="r-card-radius" min="0" max="36" step="1" />
+      </div>
+      <div class="row block">
+        <div class="row-head"><span>悬浮高度</span><span class="row-val" id="val-bottom">16 px</span></div>
+        <input type="range" id="r-bottom" min="0" max="40" step="1" />
+      </div>
+      <div class="row block">
+        <div class="row-head"><span>胶囊间距</span><span class="row-val" id="val-gap">12 px</span></div>
+        <input type="range" id="r-gap" min="4" max="30" step="1" />
+      </div>
+      <div class="row block">
+        <div class="row-head"><span>图标尺寸</span><span class="row-val" id="val-icon">26 px</span></div>
+        <input type="range" id="r-icon" min="0.8" max="1.4" step="0.05" />
+      </div>
+      <div class="row block">
+        <div class="row-head"><span>导航项最小宽度</span><span class="row-val" id="val-tabmin">72 px</span></div>
+        <input type="range" id="r-tabmin" min="56" max="96" step="2" />
+      </div>
+      <div class="row">
+        <span class="row-label">选中项放大</span>
+        <div class="switch" data-switch="activeScale"></div>
+      </div>
+      <div class="row">
+        <span class="row-label">显示文字标签</span>
+        <div class="switch" data-switch="showLabel"></div>
+      </div>
+      <div class="row">
+        <span class="row-label">双层玻璃背板</span>
+        <div class="switch" data-switch="doubleLayer"></div>
+      </div>
+    </div>
+
+    <!-- 背景壁纸 -->
+    <div class="group-title">背景壁纸</div>
+    <div class="liquid-glass card">
+      <div class="row tap" id="btn-wall-upload">
+        <span class="row-label">选择壁纸</span>
+        <span class="row-val" id="wall-state">未设置</span>
+      </div>
+      <div class="row block">
+        <div class="row-head"><span>壁纸模糊</span><span class="row-val" id="val-wall-blur">0 px</span></div>
+        <input type="range" id="r-wall-blur" min="0" max="30" step="1" />
+      </div>
+      <div class="row block">
+        <div class="row-head"><span>壁纸暗化</span><span class="row-val" id="val-wall-dim">0.35</span></div>
+        <input type="range" id="r-wall-dim" min="0" max="0.85" step="0.01" />
+      </div>
+      <div class="row">
+        <span class="row-label">预设渐变</span>
+        <div class="swatches" id="wall-presets">
+          <span class="swatch" data-preset="aurora" style="background:linear-gradient(140deg,#2b1b6b,#5b3cc4 45%,#00d4ff)"></span>
+          <span class="swatch" data-preset="sunset" style="background:linear-gradient(140deg,#3d1b4f,#ff6a3d 55%,#ffd36e)"></span>
+          <span class="swatch" data-preset="ocean" style="background:linear-gradient(140deg,#04213a,#0a6a8c 50%,#4fd1c5)"></span>
+          <span class="swatch" data-preset="sand" style="background:linear-gradient(140deg,#3a2f26,#b08a5a 55%,#ecd6b0)"></span>
+          <span class="swatch" data-preset="mono" style="background:linear-gradient(140deg,#101014,#3a3a44 55%,#6f6f7a)"></span>
+        </div>
+      </div>
+      <div class="row tap" id="btn-pick-color">
+        <span class="row-label">提取壁纸主色</span>
+        <span class="row-val">应用到指示器</span>
+      </div>
+      <div class="row tap danger" id="btn-wall-remove">
+        <span class="row-label">移除壁纸</span>
+      </div>
+    </div>
+
+    <!-- 选中指示器 -->
+    <div class="group-title">选中指示器</div>
+    <div class="liquid-glass card">
+      <div class="row">
+        <span class="row-label">指示器颜色</span>
+        <input type="color" id="c-indicator" />
+      </div>
+      <div class="row block">
+        <div class="row-head"><span>指示器样式</span></div>
+        <div class="segmented" id="seg-indicator">
+          <div class="seg-thumb"></div>
+          <div class="seg-item" data-style="fill">填充胶囊</div>
+          <div class="seg-item" data-style="ring">描边环</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 交互 -->
+    <div class="group-title">交互</div>
+    <div class="liquid-glass card">
+      <div class="row"><span class="row-label">通知</span><div class="switch" data-switch="notify"></div></div>
+      <div class="row"><span class="row-label">触感反馈</span><div class="switch" data-switch="haptic"></div></div>
+      <div class="row"><span class="row-label">滑动动效</span><div class="switch" data-switch="motion"></div></div>
+      <div class="row"><span class="row-label">滚动收起导航</span><div class="switch" data-switch="autoHide"></div></div>
+    </div>
+
+    <!-- 动效与性能 -->
+    <div class="group-title">动效与性能</div>
+    <div class="liquid-glass card">
+      <div class="row block">
+        <div class="row-head"><span>动画速度</span><span class="row-val" id="val-speed">1.0 ×</span></div>
+        <input type="range" id="r-speed" min="0.5" max="1.8" step="0.1" />
+      </div>
+      <div class="row block">
+        <div class="row-head"><span>界面字号</span><span class="row-val" id="val-font">100 %</span></div>
+        <input type="range" id="r-font" min="0.9" max="1.2" step="0.02" />
+      </div>
+      <div class="row">
+        <span class="row-label">性能模式（关闭实时模糊）</span>
+        <div class="switch" data-switch="perfMode"></div>
+      </div>
+    </div>
+
+    <!-- 存储 -->
+    <div class="group-title">存储与配置</div>
+    <div class="liquid-glass card">
+      <div class="row tap" id="btn-export"><span class="row-label">导出配置</span><span class="row-val">JSON</span></div>
+      <div class="row tap" id="btn-import"><span class="row-label">导入配置</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+      <div class="row tap" id="btn-reset"><span class="row-label">恢复默认外观</span></div>
+      <div class="row tap" id="btn-clear"><span class="row-label">清除缓存</span><span class="row-val" id="cache-size">—</span></div>
+    </div>
+
+    <!-- 关于 -->
+    <div class="group-title">关于</div>
+    <div class="liquid-glass card">
+      <div class="row"><span class="row-label">版本</span><span class="row-val">1.3.0</span></div>
+      <div class="row tap" id="btn-privacy"><span class="row-label">隐私政策</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+      <div class="row tap" id="btn-terms"><span class="row-label">用户协议</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
+    </div>
+
+    <div class="liquid-glass card" style="margin-top:20px;">
+      <div class="row tap center danger" id="btn-logout"><span>退出登录</span></div>
+    </div>
+
+    <div class="foot-note">Liquid Glass UI · 风格参考 rdev/liquid-glass-react</div>
+  </section>
+
+  <!-- ===== 视图：搜索 ===== -->
+  <section class="view" data-view="search">
+    <div class="page-head"><h1>搜索</h1><p class="page-sub">搜索设置项、应用与内容</p></div>
+    <div class="liquid-glass search-input">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg>
+      <input type="text" placeholder="搜索" />
+    </div>
+    <div class="liquid-glass plain-card"><h3>最近搜索</h3><p>液态玻璃 · 导航栏 · 圆角</p></div>
+  </section>
+</main>
+
+<nav class="tabbar-wrap" id="tabbar">
+  <div class="liquid-glass glass-capsule">
+    <div class="indicator" id="indicator"></div>
+    <div class="tab-item" data-nav="source">
+      <svg viewBox="0 0 24 24"><path d="M4 3h2v14H4V3zm3 0h2v10H7V3zm3 0h2v14h-2V3zm3 0h2v14h-2V3z"/></svg>
+      <span>源</span>
+    </div>
+    <div class="tab-item" data-nav="app">
+      <svg viewBox="0 0 24 24"><path d="M12 2L4 8l8 6 8-6-8-6zm0 10L4 18l8 6 8-6-8-6z"/></svg>
+      <span>App</span>
+    </div>
+    <div class="tab-item" data-nav="module">
+      <svg viewBox="0 0 24 24"><path d="M19.71 5.64l-1.35-1.35a1 1 0 00-1.41 0l-1.8 1.8 2.75 2.75 1.8-1.8a1 1 0 000-1.4zM14.7 9.2l-7.9 7.9a1 1 0 01-1.41 0l-.71-.71a1 1 0 010-1.41l7.9-7.9 2.12 2.12z"/><path d="M4 19h6v2H4z"/></svg>
+      <span>模块</span>
+    </div>
+    <div class="tab-item" data-nav="settings">
+      <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.39-1.08-.7-1.66-.94l-.38-2.65c-.03-.24-.24-.42-.48-.42h-4c-.24 0-.45.18-.48.42l-.38 2.65c-.58.24-1.14.55-1.66.94l-2.49-1c-.22-.08-.49 0-.61.22l-2 3.46c-.12.22-.07.49.12.64l2.11 1.65c-.04.32-.07.64-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.39 1.08.7 1.66.94l.38 2.65c.03.24.24.42.48.42h4c.24 0 .45-.18.48-.42l.38-2.65c.58-.24 1.14-.55 1.66-.94l2.49 1c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+      <span>设置</span>
+    </div>
+  </div>
+  <div class="liquid-glass glass-capsule solo">
+    <div class="tab-item solo" data-nav="search">
+      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+    </div>
+  </div>
+</nav>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="import-file" accept="application/json" style="display:none" />
+<input type="file" id="wall-file" accept="image/*" style="display:none" />
+
+<script>
+(function(){
+  'use strict';
+
+  var STORE_KEY = 'lgSettingsV3';
+
+  var DEFAULT_CONF = {
+    theme: 'dark',
+    tintColor: '#5a5a5a',
+    opacity: 0.35,
+    blur: 28,
+    saturation: 120,
+    borderAlpha: 0.10,
+    highlight: 0.55,
+    grain: 0.12,
+    chroma: 0,
+    shadow: 0.32,
+    radius: 999,
+    cardRadius: 20,
+    bottom: 16,
+    gap: 12,
+    iconScale: 1,
+    showLabel: true,
+    tabMin: 72,
+    activeScale: false,
+    animSpeed: 1,
+    fontScale: 1,
+    perfMode: false,
+    doubleLayer: false,
+    wallpaper: '',
+    wallPreset: '',
+    wallBlur: 0,
+    wallDim: 0.35,
+    indicatorColor: '#328cff',
+    indicatorStyle: 'fill',
+    notify: true,
+    haptic: true,
+    motion: true,
+    autoHide: true
+  };
+
+  var conf = loadConf();
+
+  function cloneDefaults(){ return JSON.parse(JSON.stringify(DEFAULT_CONF)); }
+
+  function loadConf(){
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if(!raw) return cloneDefaults();
+      var obj = JSON.parse(raw);
+      var merged = cloneDefaults();
+      for(var k in obj){ if(obj.hasOwnProperty(k)) merged[k] = obj[k]; }
+      return merged;
+    } catch(e){
+      return cloneDefaults();
+    }
+  }
+
+  function saveConf(){
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(conf)); } catch(e){}
+  }
+
+  /* ---------- 颜色工具 ---------- */
+  function hexToRgb(hex){
+    var h = String(hex || '#5a5a5a').replace('#','');
+    if(h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+    var r = parseInt(h.slice(0,2),16); if(isNaN(r)) r = 90;
+    var g = parseInt(h.slice(2,4),16); if(isNaN(g)) g = 90;
+    var b = parseInt(h.slice(4,6),16); if(isNaN(b)) b = 90;
+    return { r:r, g:g, b:b };
+  }
+  function rgbStr(hex){ var c = hexToRgb(hex); return c.r + ',' + c.g + ',' + c.b; }
+  function rgbaStr(hex, a){ var c = hexToRgb(hex); return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + a + ')'; }
+  function lightenStr(hex, ratio){
+    var c = hexToRgb(hex);
+    var r = Math.round(c.r + (255 - c.r) * ratio);
+    var g = Math.round(c.g + (255 - c.g) * ratio);
+    var b = Math.round(c.b + (255 - c.b) * ratio);
+    return r + ',' + g + ',' + b;
+  }
+
+  /* ---------- DOM ---------- */
+  var root = document.documentElement;
+  var body = document.body;
+  var tabbar = document.getElementById('tabbar');
+  var indicator = document.getElementById('indicator');
+  var toastEl = document.getElementById('toast');
+
+  var rOpacity = document.getElementById('r-opacity');
+  var rBlur = document.getElementById('r-blur');
+  var rSat = document.getElementById('r-sat');
+  var rBorder = document.getElementById('r-border');
+  var rHighlight = document.getElementById('r-highlight');
+  var rChroma = document.getElementById('r-chroma');
+  var rGrain = document.getElementById('r-grain');
+  var rShadow = document.getElementById('r-shadow');
+  var rRadius = document.getElementById('r-radius');
+  var rCardRadius = document.getElementById('r-card-radius');
+  var rBottom = document.getElementById('r-bottom');
+  var rGap = document.getElementById('r-gap');
+  var rIcon = document.getElementById('r-icon');
+  var rWallBlur = document.getElementById('r-wall-blur');
+  var rWallDim = document.getElementById('r-wall-dim');
+  var rTabMin = document.getElementById('r-tabmin');
+  var rSpeed = document.getElementById('r-speed');
+  var rFont = document.getElementById('r-font');
+  var presetEls = document.querySelectorAll('.swatch[data-preset]');
+  var cTint = document.getElementById('c-tint');
+  var cIndicator = document.getElementById('c-indicator');
+
+  var wallpaperEl = document.getElementById('wallpaper');
+  var wallDimEl = document.getElementById('wall-dim');
+  var wallState = document.getElementById('wall-state');
+  var wallFile = document.getElementById('wall-file');
+  var importFile = document.getElementById('import-file');
+
+  var valOpacity = document.getElementById('val-opacity');
+  var valBlur = document.getElementById('val-blur');
+  var valSat = document.getElementById('val-sat');
+  var valBorder = document.getElementById('val-border');
+  var valHighlight = document.getElementById('val-highlight');
+  var valGrain = document.getElementById('val-grain');
+  var valShadow = document.getElementById('val-shadow');
+  var valRadius = document.getElementById('val-radius');
+  var valCardRadius = document.getElementById('val-card-radius');
+  var valBottom = document.getElementById('val-bottom');
+  var valGap = document.getElementById('val-gap');
+  var valIcon = document.getElementById('val-icon');
+  var valChroma = document.getElementById('val-chroma');
+  var valWallBlur = document.getElementById('val-wall-blur');
+  var valWallDim = document.getElementById('val-wall-dim');
+  var valTabMin = document.getElementById('val-tabmin');
+  var valSpeed = document.getElementById('val-speed');
+  var valFont = document.getElementById('val-font');
+
+  var segTheme = document.getElementById('seg-theme');
+  var segIndicator = document.getElementById('seg-indicator');
+  var themeItems = segTheme.querySelectorAll('.seg-item');
+  var styleItems = segIndicator.querySelectorAll('.seg-item');
+  var switches = document.querySelectorAll('.switch[data-switch]');
+
+  var viewSections = document.querySelectorAll('.view');
+  var navItems = document.querySelectorAll('.tab-item[data-nav]');
+  var groupItems = document.querySelectorAll('.glass-capsule:not(.solo) .tab-item');
+
+  var toastTimer = null;
+  var currentNav = 'settings';
+
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 1600);
+  }
+
+  /* ---------- 分段控件布局 ---------- */
+  function layoutSeg(seg, idx){
+    var thumb = seg.querySelector('.seg-thumb');
+    var n = seg.querySelectorAll('.seg-item').length;
+    if(!thumb || !n) return;
+    thumb.style.width = 'calc((100% - 6px)/' + n + ')';
+    thumb.style.left = 'calc(3px + (100% - 6px)/' + n + ' * ' + idx + ')';
+  }
+
+  /* ---------- 主题 ---------- */
+  var mql = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+
+  function applyTheme(){
+    var light = conf.theme === 'light' || (conf.theme === 'auto' && mql && mql.matches);
+    body.classList.toggle('light', !!light);
+
+    var idx = conf.theme === 'light' ? 1 : (conf.theme === 'auto' ? 2 : 0);
+    themeItems.forEach(function(el, i){ el.classList.toggle('active', i === idx); });
+    layoutSeg(segTheme, idx);
+  }
+
+  if(mql){
+    var onScheme = function(){ if(conf.theme === 'auto') applyTheme(); };
+    if(mql.addEventListener) mql.addEventListener('change', onScheme);
+    else if(mql.addListener) mql.addListener(onScheme);
+  }
+
+  /* ---------- 壁纸 ---------- */
+  var PRESETS = {
+    aurora: { css:'linear-gradient(140deg,#2b1b6b,#5b3cc4 45%,#00d4ff)', color:'#5b3cc4' },
+    sunset: { css:'linear-gradient(140deg,#3d1b4f,#ff6a3d 55%,#ffd36e)', color:'#ff6a3d' },
+    ocean:  { css:'linear-gradient(140deg,#04213a,#0a6a8c 50%,#4fd1c5)', color:'#2aa6b8' },
+    sand:   { css:'linear-gradient(140deg,#3a2f26,#b08a5a 55%,#ecd6b0)', color:'#b08a5a' },
+    mono:   { css:'linear-gradient(140deg,#101014,#3a3a44 55%,#6f6f7a)', color:'#6f6f7a' }
+  };
+
+  function applyWallpaper(){
+    var css = '';
+    if(conf.wallpaper) css = 'url("' + conf.wallpaper + '")';
+    else if(conf.wallPreset && PRESETS[conf.wallPreset]) css = PRESETS[conf.wallPreset].css;
+
+    wallpaperEl.style.backgroundImage = css || 'none';
+    body.classList.toggle('has-wall', !!css);
+
+    presetEls.forEach(function(el){
+      el.classList.toggle('active',
+        !conf.wallpaper && el.getAttribute('data-preset') === conf.wallPreset);
+    });
+  }
+
+  /* ---------- 应用配置 ---------- */
+  function applyConfig(){
+    root.style.setProperty('--lg-blur', conf.blur + 'px');
+    root.style.setProperty('--lg-opacity', conf.opacity);
+    root.style.setProperty('--lg-saturation', conf.saturation + '%');
+    root.style.setProperty('--lg-tint', rgbStr(conf.tintColor));
+    root.style.setProperty('--lg-tint-light', lightenStr(conf.tintColor, 0.82));
+    root.style.setProperty('--lg-border-a', conf.borderAlpha);
+    root.style.setProperty('--lg-highlight', conf.highlight);
+    root.style.setProperty('--lg-grain', conf.grain);
+    root.style.setProperty('--lg-shadow', conf.shadow);
+    root.style.setProperty('--lg-chroma', conf.chroma);
+    root.style.setProperty('--lg-chroma-a', Math.min(0.55, conf.chroma * 0.09));
+    root.style.setProperty('--wall-blur', conf.wallBlur + 'px');
+    root.style.setProperty('--wall-dim-a', conf.wallDim);
+
+    root.style.setProperty('--bar-radius', conf.radius + 'px');
+    root.style.setProperty('--card-radius', conf.cardRadius + 'px');
+    root.style.setProperty('--bar-bottom', conf.bottom + 'px');
+    root.style.setProperty('--bar-gap', conf.gap + 'px');
+    root.style.setProperty('--tab-icon', (26 * conf.iconScale) + 'px');
+
+    root.style.setProperty('--indicator-color', rgbaStr(conf.indicatorColor, 0.32));
+    root.style.setProperty('--indicator-strong', rgbaStr(conf.indicatorColor, 0.8));
+    root.style.setProperty('--thumb-on', conf.indicatorColor);
+    root.style.setProperty('--tab-min', conf.tabMin + 'px');
+    root.style.setProperty('--fs-row', (15 * conf.fontScale).toFixed(1) + 'px');
+    root.style.setProperty('--fs-tab', (13 * conf.fontScale).toFixed(1) + 'px');
+
+    var dur = (0.32 * conf.animSpeed).toFixed(2);
+    root.style.setProperty('--ind-anim', conf.motion
+      ? 'all ' + dur + 's cubic-bezier(.34,1.56,.64,1)'
+      : 'none');
+
+    body.classList.toggle('no-label', !conf.showLabel);
+    body.classList.toggle('double-layer', !!conf.doubleLayer);
+    body.classList.toggle('active-scale', !!conf.activeScale);
+    body.classList.toggle('perf', !!conf.perfMode);
+    indicator.classList.toggle('ring', conf.indicatorStyle === 'ring');
+
+    applyTheme();
+    applyWallpaper();
+
+    /* 同步控件 */
+    rOpacity.value = conf.opacity;
+    rBlur.value = conf.blur;
+    rSat.value = conf.saturation;
+    rBorder.value = conf.borderAlpha;
+    rHighlight.value = conf.highlight;
+    rChroma.value = conf.chroma;
+    rGrain.value = conf.grain;
+    rShadow.value = conf.shadow;
+    rRadius.value = conf.radius;
+    rCardRadius.value = conf.cardRadius;
+    rBottom.value = conf.bottom;
+    rGap.value = conf.gap;
+    rIcon.value = conf.iconScale;
+    rTabMin.value = conf.tabMin;
+    rSpeed.value = conf.animSpeed;
+    rFont.value = conf.fontScale;
+    rWallBlur.value = conf.wallBlur;
+    rWallDim.value = conf.wallDim;
+    cTint.value = conf.tintColor;
+    cIndicator.value = conf.indicatorColor;
+
+    valOpacity.textContent = Number(conf.opacity).toFixed(2);
+    valBlur.textContent = conf.blur + ' px';
+    valSat.textContent = conf.saturation + ' %';
+    valBorder.textContent = Number(conf.borderAlpha).toFixed(2);
+    valHighlight.textContent = Number(conf.highlight).toFixed(2);
+    valGrain.textContent = Number(conf.grain).toFixed(2);
+    valShadow.textContent = Number(conf.shadow).toFixed(2);
+    valRadius.textContent = conf.radius + ' px';
+    valCardRadius.textContent = conf.cardRadius + ' px';
+    valBottom.textContent = conf.bottom + ' px';
+    valGap.textContent = conf.gap + ' px';
+    valIcon.textContent = (26 * conf.iconScale).toFixed(0) + ' px';
+    valChroma.textContent = Number(conf.chroma).toFixed(1);
+    valWallBlur.textContent = conf.wallBlur + ' px';
+    valWallDim.textContent = Number(conf.wallDim).toFixed(2);
+    valTabMin.textContent = conf.tabMin + ' px';
+    valSpeed.textContent = Number(conf.animSpeed).toFixed(1) + ' ×';
+    valFont.textContent = Math.round(conf.fontScale * 100) + ' %';
+    wallState.textContent = conf.wallpaper ? '自定义图片' : (conf.wallPreset ? '预设渐变' : '未设置');
+
+    switches.forEach(function(el){
+      el.classList.toggle('on', !!conf[el.getAttribute('data-switch')]);
+    });
+
+    var styleIdx = conf.indicatorStyle === 'ring' ? 1 : 0;
+    styleItems.forEach(function(el, i){ el.classList.toggle('active', i === styleIdx); });
+    layoutSeg(segIndicator, styleIdx);
+
+    saveConf();
+    requestAnimationFrame(moveIndicator);
+  }
+
+  /* ---------- 指示器 ---------- */
+  function moveIndicator(){
+    var targetIndex = -1;
+    for(var i = 0; i < groupItems.length; i++){
+      if(groupItems[i].getAttribute('data-nav') === currentNav) targetIndex = i;
+    }
+
+    navItems.forEach(function(el){
+      el.classList.toggle('active', el.getAttribute('data-nav') === currentNav);
+    });
+
+    if(targetIndex < 0){
+      indicator.style.opacity = '0';
+      return;
+    }
+    indicator.style.opacity = '1';
+
+    var item = groupItems[targetIndex];
+    var capsule = item.parentNode;
+    var itemRect = item.getBoundingClientRect();
+    var capRect = capsule.getBoundingClientRect();
+    var padLeft = parseFloat(getComputedStyle(capsule).paddingLeft) || 6;
+
+    indicator.style.left = (itemRect.left - capRect.left - padLeft + 4) + 'px';
+    indicator.style.width = Math.max(0, itemRect.width - 8) + 'px';
+  }
+
+  /* ---------- 视图 ---------- */
+  function switchView(name){
+    currentNav = name;
+    viewSections.forEach(function(sec){
+      sec.classList.toggle('active', sec.getAttribute('data-view') === name);
+    });
+    window.scrollTo({ top:0, behavior:'smooth' });
+    moveIndicator();
+  }
+
+  navItems.forEach(function(el){
+    el.addEventListener('click', function(){
+      if(conf.haptic && navigator.vibrate){ try{ navigator.vibrate(8); }catch(e){} }
+      switchView(el.getAttribute('data-nav'));
+    });
+  });
+
+  /* ---------- 分段交互 ---------- */
+  themeItems.forEach(function(el){
+    el.addEventListener('click', function(){ conf.theme = el.getAttribute('data-theme'); applyConfig(); });
+  });
+  styleItems.forEach(function(el){
+    el.addEventListener('click', function(){ conf.indicatorStyle = el.getAttribute('data-style'); applyConfig(); });
+  });
+
+  /* ---------- 滑块 ---------- */
+  rOpacity.addEventListener('input', function(){ conf.opacity = Number(rOpacity.value); applyConfig(); });
+  rBlur.addEventListener('input', function(){ conf.blur = Number(rBlur.value); applyConfig(); });
+  rSat.addEventListener('input', function(){ conf.saturation = Number(rSat.value); applyConfig(); });
+  rBorder.addEventListener('input', function(){ conf.borderAlpha = Number(rBorder.value); applyConfig(); });
+  rHighlight.addEventListener('input', function(){ conf.highlight = Number(rHighlight.value); applyConfig(); });
+  rChroma.addEventListener('input', function(){ conf.chroma = Number(rChroma.value); applyConfig(); });
+  rGrain.addEventListener('input', function(){ conf.grain = Number(rGrain.value); applyConfig(); });
+  rShadow.addEventListener('input', function(){ conf.shadow = Number(rShadow.value); applyConfig(); });
+  rRadius.addEventListener('input', function(){ conf.radius = Number(rRadius.value); applyConfig(); });
+  rCardRadius.addEventListener('input', function(){ conf.cardRadius = Number(rCardRadius.value); applyConfig(); });
+  rBottom.addEventListener('input', function(){ conf.bottom = Number(rBottom.value); applyConfig(); });
+  rGap.addEventListener('input', function(){ conf.gap = Number(rGap.value); applyConfig(); });
+  rIcon.addEventListener('input', function(){ conf.iconScale = Number(rIcon.value); applyConfig(); });
+  rTabMin.addEventListener('input', function(){ conf.tabMin = Number(rTabMin.value); applyConfig(); });
+  rSpeed.addEventListener('input', function(){ conf.animSpeed = Number(rSpeed.value); applyConfig(); });
+  rFont.addEventListener('input', function(){ conf.fontScale = Number(rFont.value); applyConfig(); });
+  rWallBlur.addEventListener('input', function(){ conf.wallBlur = Number(rWallBlur.value); applyConfig(); });
+  rWallDim.addEventListener('input', function(){ conf.wallDim = Number(rWallDim.value); applyConfig(); });
+
+  cTint.addEventListener('input', function(){ conf.tintColor = cTint.value; applyConfig(); });
+  cIndicator.addEventListener('input', function(){ conf.indicatorColor = cIndicator.value; applyConfig(); });
+
+  /* ---------- 开关 ---------- */
+  switches.forEach(function(el){
+    el.addEventListener('click', function(){
+      var key = el.getAttribute('data-switch');
+      conf[key] = !conf[key];
+      applyConfig();
+      if(conf.haptic && navigator.vibrate){ try{ navigator.vibrate(6); }catch(e){} }
+    });
+  });
+
+  /* ---------- 账户 ---------- */
+  document.getElementById('account-card').addEventListener('click', function(){ toast('账户信息编辑'); });
+
+  /* ---------- 导出 / 导入 ---------- */
+  document.getElementById('btn-export').addEventListener('click', function(){
+    var blob = new Blob([JSON.stringify(conf, null, 2)], { type:'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'liquid-glass-config.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    toast('配置已导出');
+  });
+
+  document.getElementById('btn-import').addEventListener('click', function(){ importFile.click(); });
+  importFile.addEventListener('change', function(){
+    var file = importFile.files && importFile.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try {
+        var obj = JSON.parse(String(reader.result));
+        for(var k in DEFAULT_CONF){ if(obj.hasOwnProperty(k)) conf[k] = obj[k]; }
+        applyConfig();
+        toast('配置导入成功');
+      } catch(err){
+        toast('文件格式不正确');
+      }
+      importFile.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  /* ---------- 壁纸上传 ---------- */
+  document.getElementById('btn-wall-upload').addEventListener('click', function(){ wallFile.click(); });
+
+  wallFile.addEventListener('change', function(){
+    var file = wallFile.files && wallFile.files[0];
+    if(!file) return;
+
+    var reader = new FileReader();
+    reader.onload = function(){
+      var img = new Image();
+      img.onload = function(){
+        var maxW = 1600;
+        var scale = Math.min(1, maxW / img.width);
+        var w = Math.max(1, Math.round(img.width * scale));
+        var h = Math.max(1, Math.round(img.height * scale));
+
+        var canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+
+        var data = canvas.toDataURL('image/jpeg', 0.82);
+        conf.wallpaper = data;
+
+        try {
+          localStorage.setItem(STORE_KEY, JSON.stringify(conf));
+          applyConfig();
+          toast('壁纸已应用');
+        } catch(e){
+          conf.wallpaper = '';
+          applyConfig();
+          toast('图片过大，存储空间不足');
+        }
+      };
+      img.onerror = function(){ toast('图片读取失败'); };
+      img.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
+    wallFile.value = '';
+  });
+
+  document.getElementById('btn-wall-remove').addEventListener('click', function(){
+    conf.wallpaper = '';
+    conf.wallPreset = '';
+    applyConfig();
+    toast('壁纸已移除');
+  });
+
+  /* ---------- 预设渐变 ---------- */
+  presetEls.forEach(function(el){
+    el.addEventListener('click', function(){
+      var key = el.getAttribute('data-preset');
+      conf.wallPreset = (conf.wallPreset === key) ? '' : key;
+      conf.wallpaper = '';
+      applyConfig();
+      toast(conf.wallPreset ? ('已应用 ' + key) : '已取消预设');
+    });
+  });
+
+  /* ---------- 提取壁纸主色 ---------- */
+  function pad2(n){
+    var s = n.toString(16);
+    return s.length < 2 ? '0' + s : s;
+  }
+
+  document.getElementById('btn-pick-color').addEventListener('click', function(){
+    if(conf.wallpaper){
+      var img = new Image();
+      img.onload = function(){
+        try {
+          var c = document.createElement('canvas');
+          c.width = 24; c.height = 24;
+          var ctx = c.getContext('2d');
+          ctx.drawImage(img, 0, 0, 24, 24);
+          var data = ctx.getImageData(0, 0, 24, 24).data;
+          var r = 0, g = 0, b = 0, n = 0, k;
+          for(k = 0; k < data.length; k += 4){
+            if(data[k + 3] < 40) continue;
+            r += data[k]; g += data[k + 1]; b += data[k + 2]; n++;
+          }
+          if(!n){ toast('无法提取颜色'); return; }
+          r = Math.round(r / n); g = Math.round(g / n); b = Math.round(b / n);
+
+          var max = Math.max(r, g, b);
+          if(max < 140 && max > 0){
+            var ratio = 140 / max;
+            r = Math.min(255, Math.round(r * ratio));
+            g = Math.min(255, Math.round(g * ratio));
+            b = Math.min(255, Math.round(b * ratio));
+          }
+
+          conf.indicatorColor = '#' + pad2(r) + pad2(g) + pad2(b);
+          applyConfig();
+          toast('已应用壁纸主色');
+        } catch(e){
+          toast('提取失败');
+        }
+      };
+      img.onerror = function(){ toast('图片读取失败'); };
+      img.src = conf.wallpaper;
+      return;
+    }
+    if(conf.wallPreset && PRESETS[conf.wallPreset]){
+      conf.indicatorColor = PRESETS[conf.wallPreset].color;
+      applyConfig();
+      toast('已应用预设主色');
+      return;
+    }
+    toast('请先设置背景壁纸');
+  });
+
+  /* ---------- 恢复默认 ---------- */
+  document.getElementById('btn-reset').addEventListener('click', function(){
+    var keepWall = conf.wallpaper;
+    var keepPreset = conf.wallPreset;
+    conf = cloneDefaults();
+    conf.wallpaper = keepWall;
+    conf.wallPreset = keepPreset;
+    applyConfig();
+    toast('已恢复默认外观');
+  });
+
+  /* ---------- 清除缓存 ---------- */
+  var cacheSizeEl = document.getElementById('cache-size');
+  function calcCacheSize(){
+    try {
+      var total = 0;
+      for(var i = 0; i < localStorage.length; i++){
+        var k = localStorage.key(i);
+        total += (k.length + String(localStorage.getItem(k) || '').length);
+      }
+      cacheSizeEl.textContent = total > 1024 ? (total / 1024).toFixed(1) + ' KB' : total + ' B';
+    } catch(e){ cacheSizeEl.textContent = '—'; }
+  }
+
+  document.getElementById('btn-clear').addEventListener('click', function(){
+    try {
+      var keys = [];
+      for(var i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
+      keys.forEach(function(k){ if(k !== STORE_KEY) localStorage.removeItem(k); });
+      calcCacheSize();
+      toast('缓存已清除');
+    } catch(e){ toast('清除失败'); }
+  });
+
+  /* ---------- 关于 / 退出 ---------- */
+  document.getElementById('btn-privacy').addEventListener('click', function(){ toast('隐私政策（示例页）'); });
+  document.getElementById('btn-terms').addEventListener('click', function(){ toast('用户协议（示例页）'); });
+  document.getElementById('btn-logout').addEventListener('click', function(){ toast('已退出登录（演示）'); });
+
+  /* ---------- 滚动收起 ---------- */
+  var lastScrollY = window.scrollY;
+  window.addEventListener('scroll', function(){
+    if(!conf.autoHide){ tabbar.classList.remove('hidden'); lastScrollY = window.scrollY; return; }
+    var y = window.scrollY;
+    if(y > lastScrollY + 10 && y > 80) tabbar.classList.add('hidden');
+    else if(y < lastScrollY - 10) tabbar.classList.remove('hidden');
+    lastScrollY = y;
+  }, { passive:true });
+
+  window.addEventListener('resize', moveIndicator);
+
+  /* ---------- 初始化 ---------- */
+  applyConfig();
+  switchView('settings');
+  calcCacheSize();
+  setTimeout(moveIndicator, 120);
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(moveIndicator);
+})();
+</script>
+</body>
+</html>
