@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.5.1
+  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.5.2
   ================================================================
   文件结构索引
     style 区块
@@ -257,9 +257,16 @@ input[type="range"]::-moz-range-track{
 }
 input[type="range"]::-moz-range-thumb{width:22px;height:22px;border:none;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.28);}
 
-input[type="color"]{-webkit-appearance:none;appearance:none;width:46px;height:30px;border:1px solid var(--lg-line);border-radius:9px;background:transparent;padding:0;cursor:pointer;}
-input[type="color"]::-webkit-color-swatch-wrapper{padding:3px;}
-input[type="color"]::-webkit-color-swatch{border:none;border-radius:6px;}
+/* 颜色控件：自绘外壳 + 隐形原生 input，保证各平台高度与居中一致 */
+.cfield{position:relative;display:block;flex:0 0 auto;align-self:center;width:46px;height:30px;
+  border-radius:9px;border:1px solid var(--lg-line);overflow:hidden;background:#328cff;cursor:pointer;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);transition:transform .15s,box-shadow .2s;}
+.cfield::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.20),rgba(255,255,255,0) 58%);}
+.cfield:active{transform:scale(.94);}
+.cfield input[type="color"]{-webkit-appearance:none;appearance:none;position:absolute;inset:-8px;
+  width:auto;height:auto;margin:0;padding:0;border:0;background:transparent;opacity:0;cursor:pointer;}
+.row .cfield{margin:0;}
 
 /* 壁纸预设色块 */
 .swatches{display:flex;gap:9px;}
@@ -676,7 +683,7 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     <div class="liquid-glass card">
       <div class="row">
         <span class="row-label">玻璃着色</span>
-        <input type="color" id="c-tint" />
+        <span class="cfield" id="cf-tint"><input type="color" id="c-tint" /></span>
       </div>
       <div class="row block">
         <div class="row-head"><span>基底透明度</span><span class="row-val" id="val-opacity">0.35</span></div>
@@ -814,7 +821,7 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     <div class="liquid-glass card">
       <div class="row">
         <span class="row-label">指示器颜色</span>
-        <input type="color" id="c-indicator" />
+        <span class="cfield" id="cf-indicator"><input type="color" id="c-indicator" /></span>
       </div>
       <div class="row block">
         <div class="row-head"><span>指示器样式</span></div>
@@ -833,7 +840,7 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
       <div class="row"><span class="row-label">触感反馈</span><div class="switch" data-switch="haptic"></div></div>
       <div class="row"><span class="row-label">滑动动效</span><div class="switch" data-switch="motion"></div></div>
       <div class="row"><span class="row-label">左右滑动切换页面</span><div class="switch" data-switch="swipeNav"></div></div>
-      <div class="row tap" data-copy="v1.5.0"><span class="row-label">当前版本号</span><span class="row-val">点击复制 1.5.0</span></div>
+      <div class="row tap" data-copy="v1.5.2"><span class="row-label">当前版本号</span><span class="row-val">点击复制 1.5.2</span></div>
     </div>
 
     <!-- 动效与性能 -->
@@ -944,7 +951,7 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     <!-- 关于 -->
     <div class="group-title">关于</div>
     <div class="liquid-glass card">
-      <div class="row"><span class="row-label">版本</span><span class="row-val">1.5.0</span></div>
+      <div class="row"><span class="row-label">版本</span><span class="row-val">1.5.2</span></div>
       <div class="row"><span class="row-label">可调配置项</span><span class="row-val" id="conf-count">—</span></div>
       <div class="row tap" id="btn-privacy"><span class="row-label">隐私政策</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
       <div class="row tap" id="btn-terms"><span class="row-label">用户协议</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
@@ -1298,6 +1305,8 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
   var rSoloIcon = document.getElementById('r-solo-icon');
   var rSoloRadius = document.getElementById('r-solo-radius');
   var presetEls = document.querySelectorAll('.swatch[data-preset]');
+  var cfTint = document.getElementById('cf-tint');
+  var cfIndicator = document.getElementById('cf-indicator');
   var cTint = document.getElementById('c-tint');
   var cIndicator = document.getElementById('c-indicator');
 
@@ -1527,7 +1536,9 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     rSoloIcon.value = conf.soloIcon;
     rSoloRadius.value = conf.soloRadius;
     cTint.value = conf.tintColor;
+    if(cfTint) cfTint.style.background = conf.tintColor;
     cIndicator.value = conf.indicatorColor;
+    if(cfIndicator) cfIndicator.style.background = conf.indicatorColor;
 
     valOpacity.textContent = fmtOff(conf.opacity, 2);
     valBlur.textContent = fmtOff(conf.blur, 0) + ' px';
