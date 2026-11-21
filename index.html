@@ -347,15 +347,66 @@ body.sheet-open{overflow:hidden;}
   color:inherit;cursor:pointer;
 }
 .pill-btn:active{transform:scale(.96);}
+body.light .pill-btn{background:rgba(0,0,0,.06);border-color:rgba(0,0,0,.12);}
 
 .sheet-foot{display:flex;gap:10px;margin-top:8px;}
 .btn{
   flex:1;padding:13px 18px;border-radius:14px;font-size:15px;font-family:inherit;
-  border:none;cursor:pointer;
+  border:none;cursor:pointer;position:relative;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  transition:transform .12s,background .2s,opacity .2s;
 }
 .btn.ghost{background:rgba(255,255,255,.1);color:inherit;}
+body.light .btn.ghost{background:rgba(0,0,0,.06);}
 .btn.primary{background:#0a84ff;color:#fff;}
+.btn.primary:active{background:#0a74e0;}
+.btn.danger{background:#ff3b30;color:#fff;}
+body.light .btn.danger{color:#fff;}
+.btn.secondary{
+  background:rgba(var(--lg-tint),calc(var(--lg-opacity) + .08));
+  color:var(--text-normal);
+  border:1px solid rgba(255,255,255,var(--lg-border-a));
+}
+body.light .btn.secondary{border-color:rgba(0,0,0,var(--lg-border-a));}
+.btn.text{background:transparent;color:#0a84ff;flex:0 0 auto;padding:10px 12px;}
+.btn.icon{flex:0 0 auto;width:38px;height:38px;padding:0;border-radius:12px;}
+.btn.sm{padding:8px 14px;font-size:13px;border-radius:11px;}
+.btn.lg{padding:16px 22px;font-size:16px;border-radius:16px;}
+.btn.block{flex:1 1 100%;width:100%;}
+.btn[disabled],.btn.is-disabled{opacity:.42;cursor:not-allowed;pointer-events:none;}
+.btn.is-loading{pointer-events:none;color:transparent;}
+.btn.is-loading::after{
+  content:'';position:absolute;width:16px;height:16px;border-radius:50%;
+  border:2px solid rgba(255,255,255,.32);border-top-color:#fff;
+  animation:spin .7s linear infinite;
+}
+.btn.ghost.is-loading::after,.btn.secondary.is-loading::after{
+  border-color:rgba(127,127,127,.3);border-top-color:currentColor;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
 .btn:active{transform:scale(.98);}
+
+.btn-group{display:flex;gap:10px;}
+
+/* 键盘可见焦点（鼠标点击不触发） */
+:is(.btn,.pill-btn,.sheet-close,.switch,.swatch,.tab-item):focus-visible{
+  outline:2px solid rgba(90,160,255,.85);outline-offset:2px;
+}
+
+/* 悬浮主按钮 */
+.fab{
+  position:fixed;right:18px;bottom:calc(var(--bar-bottom) + 96px + env(safe-area-inset-bottom));
+  width:54px;height:54px;border-radius:50%;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.14);
+  backdrop-filter:blur(20px) saturate(150%);
+  -webkit-backdrop-filter:blur(20px) saturate(150%);
+  border:1px solid rgba(255,255,255,.2);
+  box-shadow:0 10px 24px -8px rgba(0,0,0,.5);
+  color:inherit;z-index:120;transition:transform .15s;
+}
+body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
+.fab:active{transform:scale(.94);}
 
 .avatar.has-img{overflow:hidden;}
 .avatar.has-img img{width:100%;height:100%;object-fit:cover;display:block;}
