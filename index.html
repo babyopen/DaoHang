@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.5.5
+  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.6.0
   ================================================================
   文件结构索引
     style 区块
@@ -43,7 +43,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#000000" />
 <title>Liquid Glass · 设置</title>
 <style>
@@ -362,7 +362,7 @@ body.sheet-open .toast{bottom:auto;top:calc(50% - 26px);}
 .sheet{
   position:fixed;left:0;right:0;bottom:0;z-index:201;
   transform:translateY(102%);
-  transition:transform .3s cubic-bezier(.32,.72,0,1);
+  transition:transform .3s cubic-bezier(.32,.72,0,1),bottom .25s ease,max-height .25s ease;
   padding:10px 18px calc(18px + env(safe-area-inset-bottom));
   border-radius:22px 22px 0 0;
   background:rgba(28,28,30,.9);
@@ -563,6 +563,32 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
   18%{background:rgba(120,180,255,.18);}
   100%{background:transparent;}
 }
+
+/* ================= 移动端适配：键盘高度 / 缩放 ================= */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+body{touch-action:manipulation;}
+
+/* 输入框字号不低于 16px：iOS 聚焦时不再自动放大页面 */
+.dlg .dlg-field input,
+.field input,
+.search-input input{font-size:max(16px, var(--fs-row, 16px));}
+
+/* 键盘弹起（--kb = 键盘高度）时的重排 */
+body.kb-open .dlg.show{
+  transform:translate(-50%, calc(-50% - var(--kb, 0px) / 2)) scale(1);
+}
+body.kb-open .sheet{
+  bottom:var(--kb, 0px);
+  max-height:calc(100vh - var(--kb, 0px) - 12px);
+  max-height:calc(100dvh - var(--kb, 0px) - 12px);
+}
+
+/* 弹窗在矮屏上可滚动，不溢出可视区 */
+.dlg{max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);overflow-y:auto;overscroll-behavior:contain;}
+
+/* Sheet / 弹窗打开时收起底部导航，避免遮挡输入区 */
+body.sheet-open .tabbar-wrap,
+body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%,140%);}
 
 /* ================= 系统减弱动效 ================= */
 @media (prefers-reduced-motion: reduce){
@@ -948,7 +974,7 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     <!-- 关于 -->
     <div class="group-title">关于</div>
     <div class="liquid-glass card">
-      <div class="row"><span class="row-label">版本</span><span class="row-val">1.5.5</span></div>
+      <div class="row"><span class="row-label">版本</span><span class="row-val">1.6.0</span></div>
       <div class="row"><span class="row-label">可调配置项</span><span class="row-val" id="conf-count">—</span></div>
       <div class="row tap" id="btn-privacy"><span class="row-label">隐私政策</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
       <div class="row tap" id="btn-terms"><span class="row-label">用户协议</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
@@ -2530,6 +2556,40 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
   }, { passive:true });
 
   window.addEventListener('resize', moveIndicator);
+
+  /* ---------- 移动端键盘适配 ---------- */
+  (function bindKeyboard(){
+    var vv = window.visualViewport;
+    var rootEl = document.documentElement;
+    if(!vv){
+      rootEl.style.setProperty('--kb', '0px');
+      return;
+    }
+    var rafId = 0;
+    function update(){
+      rafId = 0;
+      var kb = Math.round(window.innerHeight - vv.height - vv.offsetTop);
+      if(kb < 60) kb = 0;                       /* 地址栏收起等噪声不算键盘 */
+      rootEl.style.setProperty('--kb', kb + 'px');
+      document.body.classList.toggle('kb-open', kb > 0);
+    }
+    function queue(){ if(!rafId) rafId = requestAnimationFrame(update); }
+    vv.addEventListener('resize', queue);
+    vv.addEventListener('scroll', queue);
+    window.addEventListener('orientationchange', function(){ setTimeout(update, 350); });
+    update();
+  })();
+
+  /* 输入框聚焦后滚到可视区（键盘遮挡时也能看到正在输入的内容） */
+  document.addEventListener('focusin', function(e){
+    var t = e.target;
+    if(!t || !t.matches || !t.matches('input[type="text"], input[type="email"], input[type="search"], textarea')) return;
+    setTimeout(function(){
+      try{
+        t.scrollIntoView({ block:'center', behavior:'smooth' });
+      }catch(err){ try{ t.scrollIntoView(); }catch(e2){} }
+    }, 320);
+  });
 
   /* ---------- 初始化 ---------- */
   tagRows();
