@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.6.4
+  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.6.5
   ================================================================
   文件结构索引
     style 区块
@@ -964,7 +964,7 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
     <!-- 关于 -->
     <div class="group-title">关于</div>
     <div class="liquid-glass card">
-      <div class="row"><span class="row-label">版本</span><span class="row-val">1.6.4</span></div>
+      <div class="row"><span class="row-label">版本</span><span class="row-val">1.6.5</span></div>
       <div class="row"><span class="row-label">可调配置项</span><span class="row-val" id="conf-count">—</span></div>
       <div class="row tap" id="btn-privacy"><span class="row-label">隐私政策</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
       <div class="row tap" id="btn-terms"><span class="row-label">用户协议</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
@@ -1823,6 +1823,8 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
   var lastFocusEl = null;
 
   function openProfile(){
+    /* 滑动手势刚结束时浏览器可能补发一次 click，这里直接忽略 */
+    if(Date.now() < clickBlockUntil || Date.now() - lastScrollAt < 300) return;
     pendingAvatar = profile.avatar;
     inName.value = profile.name;
     inMail.value = profile.email;
@@ -2547,6 +2549,32 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
     mono:   ['#101014', '#3a3a44', '#6f6f7a']
   };
 
+
+  /* ---------- 手势与点击隔离（滑动结束后忽略合成 click） ---------- */
+  var lastScrollAt = 0, clickBlockUntil = 0;
+  (function guardSwipeClick(){
+    var st = { y:0, sy:0, moved:false, t:0 };
+    window.addEventListener('touchstart', function(e){
+      if(!e.touches || !e.touches.length) return;
+      st = { x:e.touches[0].clientX, y:e.touches[0].clientY, sy:window.scrollY, moved:false, t:Date.now() };
+    }, { passive:true });
+    window.addEventListener('touchmove', function(e){
+      if(!e.touches || !e.touches.length) return;
+      /* 只用手指位移判定，避免程序滚动/惯性滚动把正常点击误伤 */
+      if(Math.abs(e.touches[0].clientY - st.y) > 14 || Math.abs(e.touches[0].clientX - st.x) > 14) st.moved = true;
+    }, { passive:true });
+    window.addEventListener('touchend', function(){
+      if(st.moved) clickBlockUntil = Date.now() + 350;
+    }, { passive:true });
+    document.addEventListener('click', function(e){
+      if(Date.now() < clickBlockUntil){
+        clickBlockUntil = 0;
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    }, true);
+    window.addEventListener('scroll', function(){ lastScrollAt = Date.now(); }, { passive:true });
+  })();
 
   /* ---------- 滚动收起 ---------- */
   var lastScrollY = window.scrollY;
