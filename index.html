@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.5.3
+  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.5.4
   ================================================================
   文件结构索引
     style 区块
@@ -184,7 +184,7 @@ main{min-height:100%;padding:0 16px calc(130px + env(safe-area-inset-bottom));}
 @keyframes headIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
 
 .page-head{padding:34px 4px 14px;}
-.page-head h1{font-size:30px;font-weight:700;letter-spacing:-.6px;}
+.page-head h1{font-size:var(--fs-h1,30px);font-weight:700;letter-spacing:-.6px;transition:font-size .15s;}
 .page-sub{margin-top:6px;font-size:13px;opacity:.55;}
 
 /* ================= 账户卡片 ================= */
@@ -204,7 +204,9 @@ main{min-height:100%;padding:0 16px calc(130px + env(safe-area-inset-bottom));}
 .chev path{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
 
 /* ================= 分组 ================= */
-.group-title{font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;opacity:.45;padding:0 6px 8px;margin-top:18px;}
+.group-title{font-size:var(--fs-group,12px);font-weight:600;letter-spacing:.6px;text-transform:uppercase;opacity:.45;
+  padding:0 6px calc(8px + (var(--fs-group,12px) - 12px) * .85);
+  margin-top:calc(18px + (var(--fs-group,12px) - 12px) * .35);transition:font-size .15s;}
 .card{overflow:hidden;margin-bottom:4px;}
 
 /* ================= 列表行 ================= */
@@ -676,6 +678,14 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
         <div class="row-head"><span>界面字号</span><span class="row-val" id="val-font">100 %</span></div>
         <input type="range" id="r-font" min="-0.30" max="0.30" step="0.02" />
       </div>
+      <div class="row block">
+        <div class="row-head"><span>分组标题字号</span><span class="row-val" id="val-group-font">12 px</span></div>
+        <input type="range" id="r-group-font" min="-8" max="8" step="1" />
+      </div>
+      <div class="row block">
+        <div class="row-head"><span>页面大标题字号</span><span class="row-val" id="val-h1-font">30 px</span></div>
+        <input type="range" id="r-h1-font" min="-14" max="14" step="1" />
+      </div>
     </div>
 
     <!-- 玻璃材质 -->
@@ -950,7 +960,7 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     <!-- 关于 -->
     <div class="group-title">关于</div>
     <div class="liquid-glass card">
-      <div class="row"><span class="row-label">版本</span><span class="row-val">1.5.3</span></div>
+      <div class="row"><span class="row-label">版本</span><span class="row-val">1.5.4</span></div>
       <div class="row"><span class="row-label">可调配置项</span><span class="row-val" id="conf-count">—</span></div>
       <div class="row tap" id="btn-privacy"><span class="row-label">隐私政策</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
       <div class="row tap" id="btn-terms"><span class="row-label">用户协议</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
@@ -1084,7 +1094,7 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
   };
   var BASE_CONF = {
     chroma: 0, radius: 999, cardRadius: 20, bottom: 16, gap: 12,
-    iconScale: 1, tabMin: 72, animSpeed: 1, fontScale: 1, wallBlur: 0, wallDim: 0.35,
+    iconScale: 1, tabMin: 72, animSpeed: 1, fontScale: 1, groupFont: 12, h1Font: 30, wallBlur: 0, wallDim: 0.35,
     soloW: 44, soloIcon: 26, soloRadius: 999
   };
   /* 实际生效值的合法区间（偏移算出后夹紧，避免负数把界面调崩） */
@@ -1093,6 +1103,7 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     highlight: [0, 1], grain: [0, 0.45], shadow: [0, 0.9], chroma: [0, 8],
     radius: [0, 999], cardRadius: [0, 40], bottom: [-60, 90], gap: [0, 32],
     iconScale: [0.4, 1.9], tabMin: [40, 130], animSpeed: [0.2, 2.5], fontScale: [0.85, 1.35],
+    groupFont: [9, 20], h1Font: [22, 44],
     wallBlur: [0, 44], wallDim: [0, 0.9],
     soloW: [28, 92], soloIcon: [14, 44], soloRadius: [0, 999]
   };
@@ -1144,6 +1155,8 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     activeScale: false,
     animSpeed: 0,
     fontScale: 0,
+    groupFont: 0,
+    h1Font: 0,
     perfMode: false,
     doubleLayer: false,
     webglRefract: true,
@@ -1300,6 +1313,8 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
   var rTabMin = document.getElementById('r-tabmin');
   var rSpeed = document.getElementById('r-speed');
   var rFont = document.getElementById('r-font');
+  var rGroupFont = document.getElementById('r-group-font');
+  var rH1Font = document.getElementById('r-h1-font');
   var rSoloW = document.getElementById('r-solo-w');
   var rSoloIcon = document.getElementById('r-solo-icon');
   var rSoloRadius = document.getElementById('r-solo-radius');
@@ -1333,6 +1348,8 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
   var valTabMin = document.getElementById('val-tabmin');
   var valSpeed = document.getElementById('val-speed');
   var valFont = document.getElementById('val-font');
+  var valGroupFont = document.getElementById('val-group-font');
+  var valH1Font = document.getElementById('val-h1-font');
   var valFace = document.getElementById('val-face');
   var valSoloW = document.getElementById('val-solo-w');
   var valSoloIcon = document.getElementById('val-solo-icon');
@@ -1464,6 +1481,7 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     var vRadius = eff('radius'), vCard = eff('cardRadius'), vBottom = eff('bottom');
     var vGap = eff('gap'), vIcon = eff('iconScale'), vTabMin = eff('tabMin');
     var vSpeed = eff('animSpeed'), vFont = eff('fontScale');
+    var vGroupFont = eff('groupFont'), vH1Font = eff('h1Font');
     var vWallBlur = eff('wallBlur'), vWallDim = eff('wallDim');
     var vSoloW = eff('soloW'), vSoloIcon = eff('soloIcon'), vSoloRadius = eff('soloRadius');
 
@@ -1496,6 +1514,8 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     root.style.setProperty('--solo-radius', vSoloRadius + 'px');
     root.style.setProperty('--fs-row', (15 * vFont).toFixed(1) + 'px');
     root.style.setProperty('--fs-tab', (13 * vFont).toFixed(1) + 'px');
+    root.style.setProperty('--fs-group', vGroupFont.toFixed(1) + 'px');
+    root.style.setProperty('--fs-h1', vH1Font.toFixed(1) + 'px');
 
     var reduce = !!(reducedMql && reducedMql.matches);
     var dur = (0.32 * vSpeed).toFixed(2);
@@ -1529,6 +1549,8 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     rTabMin.value = conf.tabMin;
     rSpeed.value = conf.animSpeed;
     rFont.value = conf.fontScale;
+    rGroupFont.value = conf.groupFont;
+    rH1Font.value = conf.h1Font;
     rWallBlur.value = conf.wallBlur;
     rWallDim.value = conf.wallDim;
     rSoloW.value = conf.soloW;
@@ -1557,6 +1579,8 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     valTabMin.textContent = fmtOff(conf.tabMin, 0) + ' px';
     valSpeed.textContent = fmtOff(conf.animSpeed, 2) + ' ×';
     valFont.textContent = fmtOff(conf.fontScale, 2) + ' ×';
+    valGroupFont.textContent = fmtOff(conf.groupFont, 0) + ' px';
+    valH1Font.textContent = fmtOff(conf.h1Font, 0) + ' px';
     valSoloW.textContent = fmtOff(conf.soloW, 0) + ' px';
     valSoloIcon.textContent = fmtOff(conf.soloIcon, 0) + ' px';
     valSoloRadius.textContent = fmtOff(conf.soloRadius, 0) + ' px';
@@ -1668,6 +1692,8 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
   bindRange(rTabMin, 'tabMin');
   bindRange(rSpeed, 'animSpeed');
   bindRange(rFont, 'fontScale');
+  bindRange(rGroupFont, 'groupFont');
+  bindRange(rH1Font, 'h1Font');
   bindRange(rSoloW, 'soloW');
   bindRange(rSoloIcon, 'soloIcon');
   bindRange(rSoloRadius, 'soloRadius');
@@ -2384,6 +2410,7 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     'r-highlight':'highlight','r-chroma':'chroma','r-grain':'grain','r-shadow':'shadow',
     'r-radius':'radius','r-card-radius':'cardRadius','r-bottom':'bottom','r-gap':'gap',
     'r-icon':'iconScale','r-tabmin':'tabMin','r-speed':'animSpeed','r-font':'fontScale',
+    'r-group-font':'groupFont','r-h1-font':'h1Font',
     'r-wall-blur':'wallBlur','r-wall-dim':'wallDim',
     'r-solo-w':'soloW','r-solo-icon':'soloIcon','r-solo-radius':'soloRadius',
     'c-tint':'tintColor','c-indicator':'indicatorColor'
