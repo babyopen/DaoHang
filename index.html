@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.7.2
+  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.7.3
   ================================================================
   文件结构索引
     style 区块
@@ -364,6 +364,13 @@ body.perf .liquid-glass{
 body.perf.light .liquid-glass{
   background:rgba(var(--lg-tint-light),calc(var(--lg-opacity) + .5));
 }
+/* 性能模式：浮层不叠第二层模糊，改近实色背景，减少合成开销 */
+body.perf .select-panel,body.perf .loader-card{
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+body.perf .select-panel{background:rgba(24,24,30,.97);}
+body.perf.light .select-panel{background:rgba(252,252,255,.98);}
+body.perf .loader{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(0,0,0,.5);}
 
 body.no-label .tab-item{min-width:54px;padding:10px 4px;}
 body.no-label .tab-item span{display:none;}
@@ -1105,7 +1112,7 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
     <!-- 关于 -->
     <div class="group-title">关于</div>
     <div class="liquid-glass card">
-      <div class="row"><span class="row-label">版本</span><span class="row-val">1.7.2</span></div>
+      <div class="row"><span class="row-label">版本</span><span class="row-val">1.7.3</span></div>
       <div class="row"><span class="row-label">可调配置项</span><span class="row-val" id="conf-count">—</span></div>
       <div class="row tap" id="btn-privacy"><span class="row-label">隐私政策</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></div>
       <div class="row tap" id="btn-terms"><span class="row-label">用户协议</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></div>
@@ -2683,12 +2690,19 @@ confirmDialog({
   }
 
   /* ---------- 表单控件：下拉 / 步进 / 标签 / 提示 / 加载遮罩 ---------- */
+  var selectSeq = 0;
   function initSelect(el){
     var trigger = el.querySelector('.select-trigger');
     var valEl = el.querySelector('.select-value');
+    var uid = 'sel-' + (++selectSeq);
     var panel = document.createElement('div');
     panel.className = 'select-panel';
-    panel.innerHTML = '<div class="select-search"><input type="text" placeholder="搜索选项" aria-label="搜索选项"></div><div class="select-list"></div>';
+    panel.id = uid + '-panel';
+    panel.tabIndex = -1;
+    panel.setAttribute('role', 'listbox');
+    panel.innerHTML = '<div class="select-search"><input type="text" placeholder="搜索选项" aria-label="搜索选项" role="combobox" aria-autocomplete="list" aria-expanded="true"></div><div class="select-list"></div>';
+    trigger.setAttribute('aria-controls', panel.id);
+    trigger.setAttribute('aria-haspopup', 'listbox');
     document.body.appendChild(panel);
     var input = panel.querySelector('input');
     var list = panel.querySelector('.select-list');
@@ -2716,18 +2730,23 @@ confirmDialog({
         var o = options[i];
         if(kw && o.label.toLowerCase().indexOf(kw.toLowerCase()) === -1) continue;
         count++;
-        html += '<div class="select-option' + (o.value === value ? ' is-selected is-checked' : '') + (o.disabled ? ' is-disabled' : '') + '" data-value="' + o.value + '">' + o.label + '</div>';
+        html += '<div class="select-option' + (o.value === value ? ' is-selected is-checked' : '') + (o.disabled ? ' is-disabled' : '') + '"'
+              + ' id="' + uid + '-opt-' + i + '" role="option" aria-selected="' + (o.value === value ? 'true' : 'false') + '"'
+              + ' data-value="' + o.value + '">' + o.label + '</div>';
       }
       list.innerHTML = html || '<div class="select-empty">没有匹配项</div>';
     }
     function place(){
       var r = trigger.getBoundingClientRect();
-      var w = r.width;
-      var ph = Math.min(panel.offsetHeight || 260, 300);
-      var below = window.innerHeight - r.bottom - 12;
-      var top = below >= Math.min(ph, 180) ? r.bottom + 6 : Math.max(10, r.top - ph - 6);
+      var vh = window.innerHeight;
+      var ph = Math.min(panel.offsetHeight || 0, 300) || 240;
+      var below = vh - r.bottom - 12;
+      var above = r.top - 12;
+      /* 下方放得下就向下，否则向上；两边都不够时选空间大的一侧 */
+      var top = (below >= ph || below >= above) ? r.bottom + 6 : r.top - ph - 6;
+      top = Math.max(8, Math.min(vh - ph - 8, top));
       panel.style.left = r.left + 'px';
-      panel.style.width = w + 'px';
+      panel.style.width = r.width + 'px';
       panel.style.top = top + 'px';
     }
     function open(){
@@ -2742,10 +2761,18 @@ confirmDialog({
       if(cur){ var all = Array.prototype.indexOf.call(list.querySelectorAll('.select-option:not(.is-disabled)'), cur); highlight(all); }
       place();
       input.value = '';
-      setTimeout(function(){ if(!('ontouchstart' in window)) input.focus(); }, 30);
+      /* 键盘用户把焦点送进面板；触屏只聚焦容器，避免立刻弹起键盘 */
+      setTimeout(function(){
+        try{
+          if('ontouchstart' in window){ panel.focus({ preventScroll:true }); }
+          else { input.focus({ preventScroll:true }); }
+        }catch(err){}
+      }, 30);
     }
     function close(){
+      var inside = panel.contains(document.activeElement);
       panel.classList.remove('show');
+      if(inside){ try{ trigger.focus({ preventScroll:true }); }catch(err){} }
       kbIndex = -1;
       list.querySelectorAll('.kb-active').forEach(function(x){ x.classList.remove('kb-active'); });
       trigger.setAttribute('aria-expanded','false');
@@ -2780,11 +2807,18 @@ confirmDialog({
       if(!items.length) return;
       kbIndex = Math.max(0, Math.min(items.length - 1, idx));
       for(var i=0;i<items.length;i++) items[i].classList.toggle('kb-active', i === kbIndex);
+      input.setAttribute('aria-activedescendant', items[kbIndex].id || '');
       items[kbIndex].scrollIntoView({ block:'nearest' });
     }
+    panel.addEventListener('keydown', function(e){
+      if(e.key !== 'Tab') return;
+      /* 面板里只有搜索框可聚焦：Tab 就地循环，不让焦点跑到抽屉后面 */
+      e.preventDefault();
+      try{ input.focus({ preventScroll:true }); }catch(err){}
+    });
     document.addEventListener('keydown', function(e){
       if(!panel.classList.contains('show')) return;
-      if(e.key === 'Escape'){ close(); trigger.focus(); return; }
+      if(e.key === 'Escape'){ close(); return; }
       if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
         e.preventDefault();
         highlight(kbIndex + (e.key === 'ArrowDown' ? 1 : -1));
