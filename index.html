@@ -1,4 +1,40 @@
 <!DOCTYPE html>
+<!--
+  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.3.2
+  ================================================================
+  文件结构索引
+    style 区块
+      1  变量与深浅主题        2  通用玻璃容器（::before 双层 / ::after 噪点）
+      3  页面容器 .view        4  卡片 / 列表行
+      5  账户卡片 / 分组标题    6  分段控件 / 开关 / 滑块
+      7  导航胶囊与指示器       8  Toast
+      9  账户编辑 Sheet        10 按钮体系（.btn 全家桶）
+      11 搜索直达样式          12 系统减弱动效
+    body 区块
+      背景层 .wallpaper / .wall-dim
+      → main 内 5 个 .view（source / app / module / settings / search）
+      → nav.tabbar（4 项主胶囊 + 独立搜索胶囊）
+      → .toast / 账户编辑 .sheet / 两个隐藏 file input
+    script 区块
+      A 常量与默认值（DEFAULT_CONF / DEFAULT_VARIANTS）
+      B 存储层（loadConf / saveConf / saveWall / 壁纸迁移）
+      C 主题与深浅两套变体（effectiveTheme / setMat / pullVariant）
+      D 壁纸（预设渐变 / 主色提取）
+      E 配置渲染（applyConfig / moveIndicator）
+      F 视图路由与导航
+      G 设置交互（滑块 / 开关 / 颜色 / 导出导入 / 重置）
+      H 账户模块（资料 / 头像 / Sheet 弹窗与手势）
+      I 设置项索引（搜索直达 / 双击单项重置）
+      J WebGL 边缘折射（自写 shader，可开关）
+      K 初始化
+  ================================================================
+  开发规约
+    · 视图逻辑（渲染 / 排序 / 事件 / DOM）写在视图区块；
+      数据逻辑（存储 / 计算 / 校验）集中在 A–D，不在数据区块操作 DOM。
+    · 新增界面必须复用 --lg-* 变量与既有 class，不另写 backdrop-filter。
+    · 页面切换不加容器级 opacity 动画（会触发玻璃层逐帧重绘闪动）。
+    · 弹窗统一用 Sheet 组件；新增设置项自动进搜索索引与双击重置。
+-->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -374,19 +410,26 @@ body.light .btn.secondary{border-color:rgba(0,0,0,var(--lg-border-a));}
 .btn.lg{padding:16px 22px;font-size:16px;border-radius:16px;}
 .btn.block{flex:1 1 100%;width:100%;}
 .btn[disabled],.btn.is-disabled{opacity:.42;cursor:not-allowed;pointer-events:none;}
-.btn.is-loading{pointer-events:none;color:transparent;}
+.btn.is-loading{pointer-events:none;padding-left:36px;}
 .btn.is-loading::after{
-  content:'';position:absolute;width:16px;height:16px;border-radius:50%;
+  content:'';position:absolute;left:14px;width:13px;height:13px;border-radius:50%;
   border:2px solid rgba(255,255,255,.32);border-top-color:#fff;
   animation:spin .7s linear infinite;
 }
 .btn.ghost.is-loading::after,.btn.secondary.is-loading::after{
-  border-color:rgba(127,127,127,.3);border-top-color:currentColor;
+  border-color:rgba(127,127,127,.26);border-top-color:var(--text-normal);
 }
 @keyframes spin{to{transform:rotate(360deg);}}
 .btn:active{transform:scale(.98);}
 
 .btn-group{display:flex;gap:10px;}
+
+/* 设置页组件预览区（仅作样式展示，不参与设置项搜索索引） */
+.pv-block{padding:14px 16px;border-bottom:1px solid var(--lg-line);}
+.pv-block:last-of-type{border-bottom:none;}
+.pv-label{font-size:12px;font-weight:600;letter-spacing:.3px;opacity:.42;margin-bottom:10px;}
+.pv-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.pv-row .btn{flex:0 0 auto;min-width:76px;}
 
 /* 键盘可见焦点（鼠标点击不触发） */
 :is(.btn,.pill-btn,.sheet-close,.switch,.swatch,.tab-item):focus-visible{
@@ -684,6 +727,56 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
       <div class="row tap" id="btn-import"><span class="row-label">导入配置</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
       <div class="row tap" id="btn-reset"><span class="row-label">恢复默认外观</span></div>
       <div class="row tap" id="btn-clear"><span class="row-label">清除缓存</span><span class="row-val" id="cache-size">—</span></div>
+    </div>
+
+    <!-- 组件预览：新增页面直接对照这组 class 复用 -->
+    <div class="group-title">组件预览</div>
+    <div class="liquid-glass card" id="pv-card">
+      <div class="pv-block">
+        <div class="pv-label">基础按钮 .btn</div>
+        <div class="pv-row">
+          <button class="btn primary" type="button">主要</button>
+          <button class="btn secondary" type="button">次要</button>
+          <button class="btn ghost" type="button">取消</button>
+        </div>
+        <div class="pv-row">
+          <button class="btn danger" type="button">删除</button>
+          <button class="btn text" type="button">文字</button>
+          <button class="btn icon ghost" type="button">＋</button>
+        </div>
+      </div>
+
+      <div class="pv-block">
+        <div class="pv-label">尺寸 .sm / .lg / .block</div>
+        <div class="pv-row">
+          <button class="btn sm primary" type="button">小号</button>
+          <button class="btn primary" type="button">默认</button>
+          <button class="btn lg primary" type="button">大号</button>
+        </div>
+      </div>
+
+      <div class="pv-block">
+        <div class="pv-label">状态 .is-disabled / .is-loading</div>
+        <div class="pv-row">
+          <button class="btn secondary is-disabled" type="button">禁用</button>
+          <button class="btn secondary is-loading" type="button">加载中</button>
+        </div>
+      </div>
+
+      <div class="pv-block">
+        <div class="pv-label">其它控件</div>
+        <div class="pv-row">
+          <button class="pill-btn" type="button">胶囊</button>
+          <button class="sheet-close" type="button" style="position:static" aria-label="图标按钮">✕</button>
+          <div class="switch on"></div>
+          <span class="swatch" style="background:linear-gradient(140deg,#2b1b6b,#5b3cc4 45%,#00d4ff)"></span>
+          <span class="swatch" style="background:linear-gradient(140deg,#3d1b4f,#ff6a3d 55%,#ffd36e)"></span>
+        </div>
+      </div>
+
+      <div style="padding:14px 16px 16px;">
+        <button class="btn primary block" type="button">整宽按钮 .block</button>
+      </div>
     </div>
 
     <!-- 关于 -->
