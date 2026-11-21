@@ -2,7 +2,11 @@
 'use strict';
 
   /* ---------- 设置项索引：搜索直达 + 双击恢复 ------------------ */
-  var settingsView = document.querySelector('.view[data-view="settings"]');
+  /* 设置已按分组拆成多个子页面：索引需要跨全部设置类视图扫描 */
+  var settingsViews = Array.prototype.slice.call(document.querySelectorAll('.view')).filter(function(v){
+    var n = v.getAttribute('data-view');
+    return n !== 'components' && n !== 'search';
+  });
   var searchInput = document.getElementById('search-input');
   var searchResults = document.getElementById('search-results');
 
@@ -30,7 +34,11 @@
     var card = row.closest ? row.closest('.card') : null;
     var prev = card ? card.previousElementSibling : null;
     while(prev && !(prev.classList && prev.classList.contains('group-title'))) prev = prev.previousElementSibling;
-    return prev ? prev.textContent.trim() : '其他';
+    if(prev) return prev.textContent.trim();
+    /* 设置拆成子页面后，分组名就是该页标题 */
+    var host = row.closest ? row.closest('.view') : null;
+    var h = host ? host.querySelector('.page-head h1') : null;
+    return h ? h.textContent.trim() : '其他';
   }
 
   function tagRows(){
@@ -49,18 +57,25 @@
 
   function buildIndex(){
     itemIndex = [];
-    var rows = settingsView.querySelectorAll('.row');
-    for(var i = 0; i < rows.length; i++){
-      var row = rows[i];
-      var label = rowLabel(row);
-      if(!label) continue;
-      itemIndex.push({ label: label, group: rowGroup(row), row: row, key: row.getAttribute('data-key') || '' });
-    }
+    settingsViews.forEach(function(sec){
+      var rows = sec.querySelectorAll('.row');
+      for(var i = 0; i < rows.length; i++){
+        var row = rows[i];
+        var label = rowLabel(row);
+        if(!label) continue;
+        itemIndex.push({
+          label: label, group: rowGroup(row), row: row,
+          view: sec.getAttribute('data-view'),
+          key: row.getAttribute('data-key') || ''
+        });
+      }
+    });
   }
 
   function jumpTo(row){
     expandGroup(row);
-    switchView('settings');
+    var host = row.closest ? row.closest('.view') : null;
+    switchView((host && host.getAttribute('data-view')) || 'settings');
     setTimeout(function(){
       try { row.scrollIntoView({ block:'center', behavior:'smooth' }); } catch(e){}
       row.classList.add('flash');
@@ -130,7 +145,7 @@
 
   /* 双击检测用 click 时间差实现：iOS Safari 不派发 dblclick，触摸端也能用 */
   var lastTap = { row:null, time:0 };
-  settingsView.querySelectorAll('.row').forEach(function(row){
+  Array.prototype.forEach.call(document.querySelectorAll('.row'), function(row){
     row.addEventListener('click', function(e){
       if(!row.hasAttribute('data-key')) return;          /* 纯跳转/操作行不参与 */
       var t = e.target;

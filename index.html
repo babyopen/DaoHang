@@ -146,7 +146,7 @@
 
   <!-- ===== 视图：设置 ===== -->
   <section class="view" data-view="settings">
-    <div class="page-head"><h1>设置</h1><p class="page-sub">滑块 0 = 默认外观（左减右增）· 双击参数名恢复默认</p></div>
+    <div class="page-head"><h1>设置</h1><p class="page-sub">分组进入 · 双击参数名恢复默认</p></div>
 
     <div class="liquid-glass account-card" id="account-card" role="button" tabindex="0">
       <div class="avatar" id="av-box">JD</div>
@@ -157,9 +157,45 @@
       <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg>
     </div>
 
-    <!-- 显示 -->
-    <div class="group-title">显示与字体</div>
-    <div class="liquid-glass card">
+    <div class="group-title">通用设置</div>
+    <div class="liquid-glass card row-card"><div class="row tap" data-goto="appearance"><span class="row-label">外观与字体</span><span class="row-val" id="idx-theme">深色</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></div></div>
+    <div class="liquid-glass card row-card"><div class="row tap" data-goto="nav"><span class="row-label">导航与搜索</span><span class="row-val">胶囊 · 搜索</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></div></div>
+    <div class="liquid-glass card row-card"><div class="row tap" data-goto="behavior"><span class="row-label">交互与动效</span><span class="row-val">反馈 · 性能</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></div></div>
+
+    <div class="group-title">液态玻璃</div>
+    <div class="liquid-glass card row-card"><div class="row tap" data-goto="glass"><span class="row-label">玻璃质感</span><span class="row-val">材质 · 指示器</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></div></div>
+    <div class="liquid-glass card row-card"><div class="row tap" data-goto="background"><span class="row-label">背景与壁纸</span><span class="row-val" id="idx-wall">默认渐变</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></div></div>
+
+    <div class="group-title">配置备份</div>
+    <div class="liquid-glass card row-card"><div class="row tap action" id="btn-export"><span class="row-label">导出配置</span><span class="row-val">JSON</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></div></div>
+    <div class="liquid-glass card row-card"><div class="row tap action" id="btn-import"><span class="row-label">导入配置</span><span class="row-val">从文件恢复</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></div></div>
+    <div class="liquid-glass card row-card"><div class="row tap action" id="btn-reset"><span class="row-label">恢复默认外观</span><span class="row-val">重置参数</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></div></div>
+    <div class="liquid-glass card row-card"><div class="row tap" data-goto="data"><span class="row-label">重置与缓存</span><span class="row-val">按主题重置</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></div></div>
+
+    <div class="group-title">组件</div>
+    <div class="liquid-glass card row-card"><div class="row tap" id="btn-components"><span class="row-label">组件库</span><span class="row-val">按钮 / 表单 / 提示</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></div></div>
+
+    <div class="group-title">关于与支持</div>
+    <div class="liquid-glass card row-card"><div class="row"><span class="row-label">版本</span><span class="row-val">1.7.5</span></div></div>
+    <div class="liquid-glass card row-card"><div class="row"><span class="row-label">可调配置项</span><span class="row-val" id="conf-count">—</span></div></div>
+    <div class="liquid-glass card row-card"><div class="row tap" id="btn-privacy"><span class="row-label">隐私政策</span><span class="row-val">查看</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></div></div>
+    <div class="liquid-glass card row-card"><div class="row tap" id="btn-terms"><span class="row-label">用户协议</span><span class="row-val">查看</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></div></div>
+    <div class="group-note">配置保存在本机，换机时用「导出配置」带走。</div>
+
+    <div class="liquid-glass card row-card" style="margin-top:20px;">
+      <div class="row tap center danger" id="btn-logout"><span>退出登录</span></div>
+    </div>
+
+    <div class="foot-note">Liquid Glass UI · 参考 iOS 设置的分组结构</div>
+  </section>
+
+  <section class="view" data-view="appearance">
+    <div class="page-head">
+      <button class="btn sm ghost back-btn" data-back-settings type="button">← 返回设置</button>
+      <h1>外观与字体</h1>
+      <p class="page-sub">主题、字体与整体字号，全页生效。</p>
+    </div>
+<div class="liquid-glass card">
       <div class="row block">
         <div class="row-head"><span>显示模式</span><span class="row-val" id="val-theme-mode"></span></div>
         <div class="segmented" id="seg-theme">
@@ -191,10 +227,18 @@
         <input type="range" id="r-h1-font" min="-14" max="14" step="1" />
       </div>
     </div>
+    <div class="group-note">跟随系统时按系统深浅切换；字体与字号对整页生效。</div>
 
     <!-- 玻璃材质 -->
-    <div class="group-title">玻璃材质</div>
-    <div class="liquid-glass card">
+  </section>
+
+  <section class="view" data-view="glass">
+    <div class="page-head">
+      <button class="btn sm ghost back-btn" data-back-settings type="button">← 返回设置</button>
+      <h1>玻璃质感</h1>
+      <p class="page-sub">材质参数与选中指示器，滑块 0 = 默认外观。</p>
+    </div>
+<div class="liquid-glass card">
       <div class="row">
         <span class="row-label">玻璃着色</span>
         <span class="cfield" id="cf-tint"><input type="color" id="c-tint" /></span>
@@ -236,10 +280,36 @@
         <input type="range" id="r-card-radius" min="-20" max="20" step="1" />
       </div>
     </div>
+    <div class="group-note">滑块 0 = 默认外观，向左减弱、向右增强；双击参数名恢复默认。</div>
 
     <!-- 导航栏 -->
-    <div class="group-title">导航栏</div>
-    <div class="liquid-glass card">
+
+    <div class="group-note" style="padding-top:14px;">指示器颜色与样式单独一组，改的是选中态，不影响材质本身。</div>
+<div class="liquid-glass card">
+      <div class="row">
+        <span class="row-label">指示器颜色</span>
+        <span class="cfield" id="cf-indicator"><input type="color" id="c-indicator" /></span>
+      </div>
+      <div class="row block">
+        <div class="row-head"><span>指示器样式</span></div>
+        <div class="segmented" id="seg-indicator">
+          <div class="seg-thumb"></div>
+          <div class="seg-item" data-style="fill">填充胶囊</div>
+          <div class="seg-item" data-style="ring">描边环</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 交互 -->
+  </section>
+
+  <section class="view" data-view="nav">
+    <div class="page-head">
+      <button class="btn sm ghost back-btn" data-back-settings type="button">← 返回设置</button>
+      <h1>导航与搜索</h1>
+      <p class="page-sub">底部胶囊与搜索按钮的形状、尺寸与行为。</p>
+    </div>
+<div class="liquid-glass card">
       <div class="row block">
         <div class="row-head"><span>胶囊圆角</span><span class="row-val" id="val-radius">999 px</span></div>
         <input type="range" id="r-radius" min="-999" max="999" step="1" />
@@ -269,28 +339,32 @@
         <div class="switch" data-switch="showLabel"></div>
       </div>
       <div class="row"><span class="row-label">滚动收起导航</span><div class="switch" data-switch="autoHide"></div></div>
-    </div>
-
-    <!-- 搜索按钮 -->
-    <div class="group-title">搜索按钮</div>
-    <div class="liquid-glass card">
       <div class="row block">
-        <div class="row-head"><span>按钮宽度</span><span class="row-val" id="val-solo-w">44 px</span></div>
+        <div class="row-head"><span>搜索按钮宽度</span><span class="row-val" id="val-solo-w">44 px</span></div>
         <input type="range" id="r-solo-w" min="-30" max="30" step="1" />
       </div>
       <div class="row block">
-        <div class="row-head"><span>图标尺寸</span><span class="row-val" id="val-solo-icon">26 px</span></div>
+        <div class="row-head"><span>搜索图标尺寸</span><span class="row-val" id="val-solo-icon">26 px</span></div>
         <input type="range" id="r-solo-icon" min="-14" max="14" step="1" />
       </div>
       <div class="row block">
-        <div class="row-head"><span>胶囊圆角</span><span class="row-val" id="val-solo-radius">999 px</span></div>
+        <div class="row-head"><span>搜索按钮圆角</span><span class="row-val" id="val-solo-radius">999 px</span></div>
         <input type="range" id="r-solo-radius" min="-999" max="999" step="1" />
       </div>
     </div>
+    <div class="group-note">底部胶囊与搜索按钮共用一组参数；滑块 0 = 默认外观。</div>
+
 
     <!-- 背景壁纸 -->
-    <div class="group-title">背景壁纸</div>
-    <div class="liquid-glass card">
+  </section>
+
+  <section class="view" data-view="background">
+    <div class="page-head">
+      <button class="btn sm ghost back-btn" data-back-settings type="button">← 返回设置</button>
+      <h1>背景与壁纸</h1>
+      <p class="page-sub">默认渐变、自定义壁纸与暗化程度。</p>
+    </div>
+<div class="liquid-glass card">
       <div class="row tap" id="btn-wall-upload">
         <span class="row-label">选择壁纸</span>
         <span class="row-val" id="wall-state">未设置</span>
@@ -323,34 +397,26 @@
     </div>
 
     <!-- 选中指示器 -->
-    <div class="group-title">选中指示器</div>
-    <div class="liquid-glass card">
-      <div class="row">
-        <span class="row-label">指示器颜色</span>
-        <span class="cfield" id="cf-indicator"><input type="color" id="c-indicator" /></span>
-      </div>
-      <div class="row block">
-        <div class="row-head"><span>指示器样式</span></div>
-        <div class="segmented" id="seg-indicator">
-          <div class="seg-thumb"></div>
-          <div class="seg-item" data-style="fill">填充胶囊</div>
-          <div class="seg-item" data-style="ring">描边环</div>
-        </div>
-      </div>
-    </div>
+  </section>
 
-    <!-- 交互 -->
-    <div class="group-title">交互与反馈</div>
-    <div class="liquid-glass card">
+  <section class="view" data-view="behavior">
+    <div class="page-head">
+      <button class="btn sm ghost back-btn" data-back-settings type="button">← 返回设置</button>
+      <h1>交互与动效</h1>
+      <p class="page-sub">开关类偏好与性能选项。</p>
+    </div>
+<div class="liquid-glass card">
       <div class="row"><span class="row-label">通知</span><div class="switch" data-switch="notify"></div></div>
       <div class="row"><span class="row-label">触感反馈</span><div class="switch" data-switch="haptic"></div></div>
       <div class="row"><span class="row-label">滑动动效</span><div class="switch" data-switch="motion"></div></div>
       <div class="row"><span class="row-label">左右滑动切换页面</span><div class="switch" data-switch="swipeNav"></div></div>
     </div>
+    <div class="group-note">关闭滑动动效或触感反馈后，切页只保留最基础的位移。</div>
 
     <!-- 动效与性能 -->
-    <div class="group-title">动效与性能</div>
-    <div class="liquid-glass card">
+
+    <div class="group-note" style="padding-top:14px;">动画速度与性能模式会影响所有过渡与模糊开销。</div>
+<div class="liquid-glass card">
       <div class="row block">
         <div class="row-head"><span>动画速度</span><span class="row-val" id="val-speed">1.0 ×</span></div>
         <input type="range" id="r-speed" min="-1.5" max="1.5" step="0.1" />
@@ -362,40 +428,20 @@
     </div>
 
     <!-- 存储 -->
-    <div class="group-title">存储与配置</div>
-    <div class="liquid-glass card">
-      <div class="row tap" id="btn-export"><span class="row-label">导出配置</span><span class="row-val">JSON</span></div>
-      <div class="row tap" id="btn-import"><span class="row-label">导入配置</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></div>
-      <div class="row tap" id="btn-reset"><span class="row-label">恢复默认外观</span></div>
+  </section>
+
+  <section class="view" data-view="data">
+    <div class="page-head">
+      <button class="btn sm ghost back-btn" data-back-settings type="button">← 返回设置</button>
+      <h1>数据与备份</h1>
+      <p class="page-sub">导入导出、重置与缓存清理。</p>
+    </div>
+<div class="liquid-glass card">
       <div class="row tap" id="btn-reset-dark"><span class="row-label">仅重置深色参数</span><span class="row-val">材质</span></div>
       <div class="row tap" id="btn-reset-light"><span class="row-label">仅重置浅色参数</span><span class="row-val">材质</span></div>
-      <div class="row tap" id="btn-clear"><span class="row-label">清除缓存</span><span class="row-val" id="cache-size">—</span></div>
+      <div class="row tap action" id="btn-clear"><span class="row-label">清除缓存</span><span class="row-val" id="cache-size">—</span></div>
     </div>
-
-    <!-- 组件库入口 -->
-    <div class="group-title">组件</div>
-    <div class="liquid-glass card">
-      <div class="row tap" id="btn-components">
-        <span class="row-label">组件库</span>
-        <span class="row-val">按钮 / 表单 / 提示 / 反馈</span>
-        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg>
-      </div>
-    </div>
-
-    <!-- 关于 -->
-    <div class="group-title">关于</div>
-    <div class="liquid-glass card">
-      <div class="row"><span class="row-label">版本</span><span class="row-val">1.7.4</span></div>
-      <div class="row"><span class="row-label">可调配置项</span><span class="row-val" id="conf-count">—</span></div>
-      <div class="row tap" id="btn-privacy"><span class="row-label">隐私政策</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></div>
-      <div class="row tap" id="btn-terms"><span class="row-label">用户协议</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chev"/></svg></div>
-    </div>
-
-    <div class="liquid-glass card" style="margin-top:20px;">
-      <div class="row tap center danger" id="btn-logout"><span>退出登录</span></div>
-    </div>
-
-    <div class="foot-note">双击参数名可恢复该项默认值 · Liquid Glass UI · 风格参考 rdev/liquid-glass-react</div>
+    <div class="group-note">只重置当前主题那一套材质参数；清除缓存会一并丢掉壁纸与头像。</div>
   </section>
 
   <!-- ===== 视图：组件库 ===== -->

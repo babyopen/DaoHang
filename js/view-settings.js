@@ -25,6 +25,13 @@
     }
   }
 
+  function syncIndexSummary(){
+    var tEl = document.getElementById('idx-theme');
+    if(tEl) tEl.textContent = conf.theme === 'auto' ? '跟随系统' : (conf.theme === 'light' ? '浅色' : '深色');
+    var wEl = document.getElementById('idx-wall');
+    if(wEl) wEl.textContent = document.body.classList.contains('has-wall') ? '自定义' : '默认渐变';
+  }
+
   function applyTheme(){
     var light = effectiveTheme() === 'light';
     body.classList.toggle('light', light);
@@ -79,6 +86,7 @@
       el.classList.toggle('active',
         !conf.wallpaper && el.getAttribute('data-preset') === conf.wallPreset);
     });
+    if(typeof syncIndexSummary === 'function') syncIndexSummary();
   }
 
   /* ---------- 应用配置 ---------- */
@@ -145,6 +153,7 @@
 
     applyTheme();
     applyWallpaper();
+    syncIndexSummary();
 
     /* 同步控件（滑块显示的是偏移量） */
     rOpacity.value = conf.opacity;
@@ -620,8 +629,14 @@
       var name = t.textContent.trim();
       var on = conf.collapsed.indexOf(name) >= 0;
       t.classList.toggle('collapsed', on);
-      var card = t.nextElementSibling;
-      if(card && card.classList.contains('card')) card.classList.toggle('collapsed', on);
+      /* 一个分组可能有多张单行卡片，折叠要覆盖到下一个标题之前的所有卡片 */
+      var el = t.nextElementSibling;
+      while(el && !el.classList.contains('group-title') && el.tagName !== 'SECTION'){
+        if(el.classList.contains('card') || el.classList.contains('group-note')){
+          el.classList.toggle('collapsed', on);
+        }
+        el = el.nextElementSibling;
+      }
     });
   }
 
@@ -835,3 +850,11 @@
     sand:   ['#3a2f26', '#b08a5a', '#ecd6b0'],
     mono:   ['#101014', '#3a3a44', '#6f6f7a']
   };
+
+  /* ---------- 分组子页面导航 ---------- */
+  Array.prototype.forEach.call(document.querySelectorAll('.row[data-goto]'), function(row){
+    row.addEventListener('click', function(){ switchView(row.getAttribute('data-goto')); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-back-settings], #btn-back-settings'), function(btn){
+    btn.addEventListener('click', function(){ switchView('settings'); });
+  });
