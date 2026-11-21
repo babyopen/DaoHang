@@ -6,7 +6,7 @@
     style 区块
       1  变量与深浅主题        2  通用玻璃容器（::before 双层 / ::after 噪点）
       3  页面容器 .view        4  卡片 / 列表行
-      5  账户卡片 / 分组标题    6  分段控件 / 开关 / 滑块
+      5  账户卡片 / 分组标题    6  分段控件 / 开关 / 滑块（中点标记）
       7  导航胶囊与指示器       8  Toast
       9  账户编辑 Sheet        10 按钮体系（.btn 全家桶）
       11 搜索直达样式          12 通用组件（分割线/徽标/空态/列表项）
@@ -38,6 +38,8 @@
     · 页面切换不加容器级 opacity 动画（会触发玻璃层逐帧重绘闪动）。
     · 弹窗二选一：内容编辑用底部 Sheet，二次确认/输入用 confirmDialog。
     · 新增设置项自动进搜索索引与双击重置；分组可在标题上折叠。
+    · 数值参数一律存「偏移量」：conf 里 0 = 默认外观，渲染必须经 eff(key)
+      取基准值再夹紧（BASE_VARIANTS / BASE_CONF + LIMIT），不要直接读 conf 数值。
 -->
 <html lang="zh-CN">
 <head>
@@ -250,9 +252,16 @@ body.light .seg-thumb{background:#fff;border-color:rgba(0,0,0,.06);box-shadow:0 
 
 /* ================= 滑块 ================= */
 input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:26px;background:transparent;outline:none;cursor:pointer;}
-input[type="range"]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:rgba(120,120,120,.3);}
+input[type="range"]::-webkit-slider-runnable-track{
+  height:4px;border-radius:2px;
+  /* 中点略亮：提示「0 = 默认」，左右分别是减弱与增强 */
+  background:linear-gradient(90deg,rgba(120,120,120,.16) 0%,rgba(120,120,120,.16) 46%,rgba(160,160,160,.46) 50%,rgba(120,120,120,.16) 54%,rgba(120,120,120,.16) 100%);
+}
 input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;margin-top:-10px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.28);}
-input[type="range"]::-moz-range-track{height:4px;border-radius:2px;background:rgba(120,120,120,.3);}
+input[type="range"]::-moz-range-track{
+  height:4px;border-radius:2px;
+  background:linear-gradient(90deg,rgba(120,120,120,.16) 0%,rgba(120,120,120,.16) 46%,rgba(160,160,160,.46) 50%,rgba(120,120,120,.16) 54%,rgba(120,120,120,.16) 100%);
+}
 input[type="range"]::-moz-range-thumb{width:22px;height:22px;border:none;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.28);}
 
 input[type="color"]{-webkit-appearance:none;appearance:none;width:46px;height:30px;border:1px solid var(--lg-line);border-radius:9px;background:transparent;padding:0;cursor:pointer;}
@@ -630,7 +639,7 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
 
   <!-- ===== 视图：设置 ===== -->
   <section class="view" data-view="settings">
-    <div class="page-head"><h1>设置</h1><p class="page-sub">液态玻璃外观与通用偏好</p></div>
+    <div class="page-head"><h1>设置</h1><p class="page-sub">滑块 0 = 默认外观，向左减弱 / 向右增强</p></div>
 
     <div class="liquid-glass account-card" id="account-card" role="button" tabindex="0">
       <div class="avatar" id="av-box">JD</div>
@@ -676,35 +685,35 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
       </div>
       <div class="row block">
         <div class="row-head"><span>基底透明度</span><span class="row-val" id="val-opacity">0.35</span></div>
-        <input type="range" id="r-opacity" min="0.05" max="0.7" step="0.01" />
+        <input type="range" id="r-opacity" min="-0.32" max="0.32" step="0.01" />
       </div>
       <div class="row block">
         <div class="row-head"><span>模糊强度</span><span class="row-val" id="val-blur">28 px</span></div>
-        <input type="range" id="r-blur" min="8" max="48" step="1" />
+        <input type="range" id="r-blur" min="-28" max="28" step="1" />
       </div>
       <div class="row block">
         <div class="row-head"><span>饱和度</span><span class="row-val" id="val-sat">120 %</span></div>
-        <input type="range" id="r-sat" min="80" max="200" step="1" />
+        <input type="range" id="r-sat" min="-110" max="110" step="5" />
       </div>
       <div class="row block">
         <div class="row-head"><span>边框强度</span><span class="row-val" id="val-border">0.10</span></div>
-        <input type="range" id="r-border" min="0" max="0.4" step="0.01" />
+        <input type="range" id="r-border" min="-0.18" max="0.20" step="0.01" />
       </div>
       <div class="row block">
         <div class="row-head"><span>内高光</span><span class="row-val" id="val-highlight">0.55</span></div>
-        <input type="range" id="r-highlight" min="0" max="1" step="0.01" />
+        <input type="range" id="r-highlight" min="-0.55" max="0.45" step="0.01" />
       </div>
       <div class="row block">
         <div class="row-head"><span>模糊色散（RGB 分离）</span><span class="row-val" id="val-chroma">0.0</span></div>
-        <input type="range" id="r-chroma" min="0" max="6" step="0.5" />
+        <input type="range" id="r-chroma" min="-6" max="6" step="0.5" />
       </div>
       <div class="row block">
         <div class="row-head"><span>噪点颗粒</span><span class="row-val" id="val-grain">0.12</span></div>
-        <input type="range" id="r-grain" min="0" max="0.4" step="0.01" />
+        <input type="range" id="r-grain" min="-0.12" max="0.30" step="0.01" />
       </div>
       <div class="row block">
         <div class="row-head"><span>投影强度</span><span class="row-val" id="val-shadow">0.32</span></div>
-        <input type="range" id="r-shadow" min="0" max="0.8" step="0.01" />
+        <input type="range" id="r-shadow" min="-0.32" max="0.50" step="0.01" />
       </div>
       <div class="row">
         <span class="row-label">边缘折射（WebGL）</span>
@@ -717,27 +726,27 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     <div class="liquid-glass card">
       <div class="row block">
         <div class="row-head"><span>胶囊圆角</span><span class="row-val" id="val-radius">999 px</span></div>
-        <input type="range" id="r-radius" min="8" max="999" step="1" />
+        <input type="range" id="r-radius" min="-999" max="120" step="1" />
       </div>
       <div class="row block">
         <div class="row-head"><span>卡片圆角</span><span class="row-val" id="val-card-radius">20 px</span></div>
-        <input type="range" id="r-card-radius" min="0" max="36" step="1" />
+        <input type="range" id="r-card-radius" min="-20" max="20" step="1" />
       </div>
       <div class="row block">
         <div class="row-head"><span>悬浮高度</span><span class="row-val" id="val-bottom">16 px</span></div>
-        <input type="range" id="r-bottom" min="-40" max="40" step="1" />
+        <input type="range" id="r-bottom" min="-76" max="60" step="2" />
       </div>
       <div class="row block">
         <div class="row-head"><span>胶囊间距</span><span class="row-val" id="val-gap">12 px</span></div>
-        <input type="range" id="r-gap" min="4" max="30" step="1" />
+        <input type="range" id="r-gap" min="-12" max="18" step="1" />
       </div>
       <div class="row block">
         <div class="row-head"><span>图标尺寸</span><span class="row-val" id="val-icon">26 px</span></div>
-        <input type="range" id="r-icon" min="0.8" max="1.4" step="0.05" />
+        <input type="range" id="r-icon" min="-0.60" max="0.80" step="0.05" />
       </div>
       <div class="row block">
         <div class="row-head"><span>导航项最小宽度</span><span class="row-val" id="val-tabmin">72 px</span></div>
-        <input type="range" id="r-tabmin" min="56" max="96" step="2" />
+        <input type="range" id="r-tabmin" min="-32" max="48" step="2" />
       </div>
       <div class="row">
         <span class="row-label">选中项放大</span>
@@ -762,11 +771,11 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
       </div>
       <div class="row block">
         <div class="row-head"><span>壁纸模糊</span><span class="row-val" id="val-wall-blur">0 px</span></div>
-        <input type="range" id="r-wall-blur" min="0" max="30" step="1" />
+        <input type="range" id="r-wall-blur" min="-40" max="44" step="1" />
       </div>
       <div class="row block">
         <div class="row-head"><span>壁纸暗化</span><span class="row-val" id="val-wall-dim">0.35</span></div>
-        <input type="range" id="r-wall-dim" min="0" max="0.85" step="0.01" />
+        <input type="range" id="r-wall-dim" min="-0.35" max="0.55" step="0.01" />
       </div>
       <div class="row">
         <span class="row-label">预设渐变</span>
@@ -812,7 +821,7 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
       <div class="row"><span class="row-label">滑动动效</span><div class="switch" data-switch="motion"></div></div>
       <div class="row"><span class="row-label">滚动收起导航</span><div class="switch" data-switch="autoHide"></div></div>
       <div class="row"><span class="row-label">左右滑动切换页面</span><div class="switch" data-switch="swipeNav"></div></div>
-      <div class="row tap" data-copy="v1.4.0"><span class="row-label">当前版本号</span><span class="row-val">点击复制 1.4.0</span></div>
+      <div class="row tap" data-copy="v1.5.0"><span class="row-label">当前版本号</span><span class="row-val">点击复制 1.5.0</span></div>
     </div>
 
     <!-- 动效与性能 -->
@@ -820,11 +829,11 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     <div class="liquid-glass card">
       <div class="row block">
         <div class="row-head"><span>动画速度</span><span class="row-val" id="val-speed">1.0 ×</span></div>
-        <input type="range" id="r-speed" min="0.5" max="1.8" step="0.1" />
+        <input type="range" id="r-speed" min="-0.8" max="1.5" step="0.1" />
       </div>
       <div class="row block">
         <div class="row-head"><span>界面字号</span><span class="row-val" id="val-font">100 %</span></div>
-        <input type="range" id="r-font" min="0.9" max="1.2" step="0.02" />
+        <input type="range" id="r-font" min="-0.14" max="0.30" step="0.02" />
       </div>
       <div class="row">
         <span class="row-label">性能模式（关闭实时模糊）</span>
@@ -927,7 +936,7 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     <!-- 关于 -->
     <div class="group-title">关于</div>
     <div class="liquid-glass card">
-      <div class="row"><span class="row-label">版本</span><span class="row-val">1.4.0</span></div>
+      <div class="row"><span class="row-label">版本</span><span class="row-val">1.5.0</span></div>
       <div class="row"><span class="row-label">可调配置项</span><span class="row-val" id="conf-count">—</span></div>
       <div class="row tap" id="btn-privacy"><span class="row-label">隐私政策</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
       <div class="row tap" id="btn-terms"><span class="row-label">用户协议</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
@@ -1034,53 +1043,98 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
 (function(){
   'use strict';
 
-  var STORE_KEY = 'lgSettingsV3';
+  var STORE_KEY = 'lgSettingsV4';
   var WALL_KEY = 'lgWallpaperV1';
 
   /* 深色 / 浅色各存一套玻璃材质参数 */
   var VARIANT_KEYS = ['tintColor','opacity','blur','saturation','borderAlpha','highlight','grain','shadow','indicatorColor'];
 
+  /* 滑块存的是「相对基准的偏移」：0 = 默认外观，负 = 减弱，正 = 增强 */
   var DEFAULT_VARIANTS = {
     dark: {
-      tintColor: '#5a5a5a', opacity: 0.35, blur: 28, saturation: 120,
-      borderAlpha: 0.10, highlight: 0.55, grain: 0.12, shadow: 0.32,
+      tintColor: '#5a5a5a', opacity: 0, blur: 0, saturation: 0,
+      borderAlpha: 0, highlight: 0, grain: 0, shadow: 0,
       indicatorColor: '#328cff'
     },
     light: {
-      tintColor: '#f4f4f8', opacity: 0.55, blur: 26, saturation: 135,
-      borderAlpha: 0.18, highlight: 0.78, grain: 0.07, shadow: 0.18,
+      tintColor: '#f4f4f8', opacity: 0, blur: 0, saturation: 0,
+      borderAlpha: 0, highlight: 0, grain: 0, shadow: 0,
       indicatorColor: '#0a84ff'
     }
   };
 
+  /* 基准值：滑块为 0 时真正生效的外观（深浅两套各自不同） */
+  var BASE_VARIANTS = {
+    dark:  { opacity: 0.35, blur: 28, saturation: 120, borderAlpha: 0.10, highlight: 0.55, grain: 0.12, shadow: 0.32 },
+    light: { opacity: 0.55, blur: 26, saturation: 135, borderAlpha: 0.18, highlight: 0.78, grain: 0.07, shadow: 0.18 }
+  };
+  var BASE_CONF = {
+    chroma: 0, radius: 999, cardRadius: 20, bottom: 16, gap: 12,
+    iconScale: 1, tabMin: 72, animSpeed: 1, fontScale: 1, wallBlur: 0, wallDim: 0.35
+  };
+  /* 实际生效值的合法区间（偏移算出后夹紧，避免负数把界面调崩） */
+  var LIMIT = {
+    opacity: [0.03, 0.9], blur: [0, 60], saturation: [0, 250], borderAlpha: [0, 0.5],
+    highlight: [0, 1], grain: [0, 0.45], shadow: [0, 0.9], chroma: [0, 8],
+    radius: [0, 999], cardRadius: [0, 40], bottom: [-60, 90], gap: [0, 32],
+    iconScale: [0.4, 1.9], tabMin: [40, 130], animSpeed: [0.2, 2.5], fontScale: [0.85, 1.35],
+    wallBlur: [0, 44], wallDim: [0, 0.9]
+  };
+
+  function clampNum(v, lim){
+    if(!lim) return v;
+    return Math.min(lim[1], Math.max(lim[0], v));
+  }
+
+  /* 偏移 → 实际生效值 */
+  function eff(key){
+    var base;
+    if(VARIANT_KEYS.indexOf(key) >= 0){
+      var pal = effectiveTheme();
+      base = BASE_VARIANTS[pal] ? BASE_VARIANTS[pal][key] : 0;
+    } else {
+      base = BASE_CONF[key];
+    }
+    if(base === undefined) base = 0;
+    return clampNum(base + (Number(conf[key]) || 0), LIMIT[key]);
+  }
+
+  function fmtOff(v, digits){
+    var n = Number(v) || 0;
+    if(Math.abs(n) < Math.pow(10, -(digits + 1))) n = 0;
+    var t = n.toFixed(digits);
+    if(n > 0) t = '+' + t;
+    return t;
+  }
+
   var DEFAULT_CONF = {
     theme: 'dark',
     tintColor: '#5a5a5a',
-    opacity: 0.35,
-    blur: 28,
-    saturation: 120,
-    borderAlpha: 0.10,
-    highlight: 0.55,
-    grain: 0.12,
+    opacity: 0,
+    blur: 0,
+    saturation: 0,
+    borderAlpha: 0,
+    highlight: 0,
+    grain: 0,
     chroma: 0,
-    shadow: 0.32,
-    radius: 999,
-    cardRadius: 20,
-    bottom: 16,
-    gap: 12,
-    iconScale: 1,
+    shadow: 0,
+    radius: 0,
+    cardRadius: 0,
+    bottom: 0,
+    gap: 0,
+    iconScale: 0,
     showLabel: true,
-    tabMin: 72,
+    tabMin: 0,
     activeScale: false,
-    animSpeed: 1,
-    fontScale: 1,
+    animSpeed: 0,
+    fontScale: 0,
     perfMode: false,
     doubleLayer: false,
     webglRefract: true,
     wallpaper: '',
     wallPreset: '',
     wallBlur: 0,
-    wallDim: 0.35,
+    wallDim: 0,
     indicatorColor: '#328cff',
     indicatorStyle: 'fill',
     notify: false,
@@ -1378,35 +1432,43 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
   /* ---------- 应用配置 ---------- */
   function applyConfig(){
     pullVariant();
-    root.style.setProperty('--lg-blur', conf.blur + 'px');
-    root.style.setProperty('--lg-opacity', conf.opacity);
-    root.style.setProperty('--lg-saturation', conf.saturation + '%');
+    var vBlur = eff('blur'), vOpacity = eff('opacity'), vSat = eff('saturation');
+    var vBorder = eff('borderAlpha'), vHigh = eff('highlight'), vGrain = eff('grain');
+    var vShadow = eff('shadow'), vChroma = eff('chroma');
+    var vRadius = eff('radius'), vCard = eff('cardRadius'), vBottom = eff('bottom');
+    var vGap = eff('gap'), vIcon = eff('iconScale'), vTabMin = eff('tabMin');
+    var vSpeed = eff('animSpeed'), vFont = eff('fontScale');
+    var vWallBlur = eff('wallBlur'), vWallDim = eff('wallDim');
+
+    root.style.setProperty('--lg-blur', vBlur + 'px');
+    root.style.setProperty('--lg-opacity', vOpacity);
+    root.style.setProperty('--lg-saturation', vSat + '%');
     root.style.setProperty('--lg-tint', rgbStr(conf.tintColor));
     root.style.setProperty('--lg-tint-light', lightenStr(conf.tintColor, 0.82));
-    root.style.setProperty('--lg-border-a', conf.borderAlpha);
-    root.style.setProperty('--lg-highlight', conf.highlight);
-    root.style.setProperty('--lg-grain', conf.grain);
-    root.style.setProperty('--lg-shadow', conf.shadow);
-    root.style.setProperty('--lg-chroma', conf.chroma);
-    root.style.setProperty('--lg-chroma-a', Math.min(0.55, conf.chroma * 0.09));
-    root.style.setProperty('--wall-blur', conf.wallBlur + 'px');
-    root.style.setProperty('--wall-dim-a', conf.wallDim);
+    root.style.setProperty('--lg-border-a', vBorder);
+    root.style.setProperty('--lg-highlight', vHigh);
+    root.style.setProperty('--lg-grain', vGrain);
+    root.style.setProperty('--lg-shadow', vShadow);
+    root.style.setProperty('--lg-chroma', vChroma);
+    root.style.setProperty('--lg-chroma-a', Math.min(0.55, vChroma * 0.09));
+    root.style.setProperty('--wall-blur', vWallBlur + 'px');
+    root.style.setProperty('--wall-dim-a', vWallDim);
 
-    root.style.setProperty('--bar-radius', conf.radius + 'px');
-    root.style.setProperty('--card-radius', conf.cardRadius + 'px');
-    root.style.setProperty('--bar-bottom', conf.bottom + 'px');
-    root.style.setProperty('--bar-gap', conf.gap + 'px');
-    root.style.setProperty('--tab-icon', (26 * conf.iconScale) + 'px');
+    root.style.setProperty('--bar-radius', vRadius + 'px');
+    root.style.setProperty('--card-radius', vCard + 'px');
+    root.style.setProperty('--bar-bottom', vBottom + 'px');
+    root.style.setProperty('--bar-gap', vGap + 'px');
+    root.style.setProperty('--tab-icon', (26 * vIcon) + 'px');
 
     root.style.setProperty('--indicator-color', rgbaStr(conf.indicatorColor, 0.32));
     root.style.setProperty('--indicator-strong', rgbaStr(conf.indicatorColor, 0.8));
     root.style.setProperty('--thumb-on', conf.indicatorColor);
-    root.style.setProperty('--tab-min', conf.tabMin + 'px');
-    root.style.setProperty('--fs-row', (15 * conf.fontScale).toFixed(1) + 'px');
-    root.style.setProperty('--fs-tab', (13 * conf.fontScale).toFixed(1) + 'px');
+    root.style.setProperty('--tab-min', vTabMin + 'px');
+    root.style.setProperty('--fs-row', (15 * vFont).toFixed(1) + 'px');
+    root.style.setProperty('--fs-tab', (13 * vFont).toFixed(1) + 'px');
 
     var reduce = !!(reducedMql && reducedMql.matches);
-    var dur = (0.32 * conf.animSpeed).toFixed(2);
+    var dur = (0.32 * vSpeed).toFixed(2);
     root.style.setProperty('--ind-anim', (conf.motion && !reduce)
       ? 'all ' + dur + 's cubic-bezier(.34,1.56,.64,1)'
       : 'none');
@@ -1420,7 +1482,7 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     applyTheme();
     applyWallpaper();
 
-    /* 同步控件 */
+    /* 同步控件（滑块显示的是偏移量） */
     rOpacity.value = conf.opacity;
     rBlur.value = conf.blur;
     rSat.value = conf.saturation;
@@ -1442,24 +1504,24 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     cTint.value = conf.tintColor;
     cIndicator.value = conf.indicatorColor;
 
-    valOpacity.textContent = Number(conf.opacity).toFixed(2);
-    valBlur.textContent = conf.blur + ' px';
-    valSat.textContent = conf.saturation + ' %';
-    valBorder.textContent = Number(conf.borderAlpha).toFixed(2);
-    valHighlight.textContent = Number(conf.highlight).toFixed(2);
-    valGrain.textContent = Number(conf.grain).toFixed(2);
-    valShadow.textContent = Number(conf.shadow).toFixed(2);
-    valRadius.textContent = conf.radius + ' px';
-    valCardRadius.textContent = conf.cardRadius + ' px';
-    valBottom.textContent = conf.bottom + ' px';
-    valGap.textContent = conf.gap + ' px';
-    valIcon.textContent = (26 * conf.iconScale).toFixed(0) + ' px';
-    valChroma.textContent = Number(conf.chroma).toFixed(1);
-    valWallBlur.textContent = conf.wallBlur + ' px';
-    valWallDim.textContent = Number(conf.wallDim).toFixed(2);
-    valTabMin.textContent = conf.tabMin + ' px';
-    valSpeed.textContent = Number(conf.animSpeed).toFixed(1) + ' ×';
-    valFont.textContent = Math.round(conf.fontScale * 100) + ' %';
+    valOpacity.textContent = fmtOff(conf.opacity, 2);
+    valBlur.textContent = fmtOff(conf.blur, 0) + ' px';
+    valSat.textContent = fmtOff(conf.saturation, 0) + ' %';
+    valBorder.textContent = fmtOff(conf.borderAlpha, 2);
+    valHighlight.textContent = fmtOff(conf.highlight, 2);
+    valGrain.textContent = fmtOff(conf.grain, 2);
+    valShadow.textContent = fmtOff(conf.shadow, 2);
+    valRadius.textContent = fmtOff(conf.radius, 0) + ' px';
+    valCardRadius.textContent = fmtOff(conf.cardRadius, 0) + ' px';
+    valBottom.textContent = fmtOff(conf.bottom, 0) + ' px';
+    valGap.textContent = fmtOff(conf.gap, 0) + ' px';
+    valIcon.textContent = fmtOff(conf.iconScale, 2) + ' ×';
+    valChroma.textContent = fmtOff(conf.chroma, 1);
+    valWallBlur.textContent = fmtOff(conf.wallBlur, 0) + ' px';
+    valWallDim.textContent = fmtOff(conf.wallDim, 2);
+    valTabMin.textContent = fmtOff(conf.tabMin, 0) + ' px';
+    valSpeed.textContent = fmtOff(conf.animSpeed, 2) + ' ×';
+    valFont.textContent = fmtOff(conf.fontScale, 2) + ' ×';
     wallState.textContent = conf.wallpaper ? '自定义图片' : (conf.wallPreset ? '预设渐变' : '未设置');
 
     switches.forEach(function(el){
@@ -2570,8 +2632,8 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
       var iw = GL.wallImg.width, ih = GL.wallImg.height;
       var s = Math.max(w / iw, h / ih) * 1.06;
       var dw = iw * s, dh = ih * s;
-      if(conf.wallBlur > 0){
-        try { ctx.filter = 'blur(' + Math.max(0.5, conf.wallBlur * scale) + 'px)'; } catch(e){}
+      if(eff('wallBlur') > 0){
+        try { ctx.filter = 'blur(' + Math.max(0.5, eff('wallBlur') * scale) + 'px)'; } catch(e){}
       }
       ctx.drawImage(GL.wallImg, (w - dw) / 2, (h - dh) / 2, dw, dh);
       try { ctx.filter = 'none'; } catch(e){}
@@ -2592,7 +2654,7 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     }
 
     if(hasWall){
-      var a = Math.max(0, Math.min(1, Number(conf.wallDim) || 0));
+      var a = Math.max(0, Math.min(1, eff('wallDim')));
       ctx.fillStyle = light ? 'rgba(255,255,255,' + a + ')' : 'rgba(0,0,0,' + a + ')';
       ctx.fillRect(0, 0, w, h);
     }
@@ -2652,9 +2714,9 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
     gl.uniform1i(GL.u.uBg, 0);
 
     gl.uniform1f(GL.u.uRing, 13 * dpr);
-    gl.uniform1f(GL.u.uRefract, (9 + conf.blur * 0.9) * dpr);
-    gl.uniform1f(GL.u.uChroma, (conf.chroma || 0) / 6 * 0.4);
-    gl.uniform1f(GL.u.uHighlight, 0.3 * (0.35 + conf.highlight));
+    gl.uniform1f(GL.u.uRefract, (9 + eff('blur') * 0.9) * dpr);
+    gl.uniform1f(GL.u.uChroma, eff('chroma') / 6 * 0.4);
+    gl.uniform1f(GL.u.uHighlight, 0.3 * (0.35 + eff('highlight')));
 
     gl.enable(gl.SCISSOR_TEST);
     var targets = document.querySelectorAll('.liquid-glass');
@@ -2705,7 +2767,7 @@ body.light .fab{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08);}
   /* 圆角/尺寸相关参数变化时才重算圆角缓存，滚动时不再触发样式读取 */
   var glRadiusKey = '';
   function glCacheRadius(){
-    var key = [conf.radius, conf.cardRadius, conf.iconScale, conf.fontScale, conf.tabMin, conf.showLabel].join('|');
+    var key = [eff('radius'), eff('cardRadius'), eff('iconScale'), eff('fontScale'), eff('tabMin'), conf.showLabel].join('|');
     if(key === glRadiusKey) return;
     glRadiusKey = key;
     var els = document.querySelectorAll('.liquid-glass');
