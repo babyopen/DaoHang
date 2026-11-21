@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.6.7
+  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.6.8
   ================================================================
   文件结构索引
     style 区块
@@ -988,7 +988,7 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
     <!-- 关于 -->
     <div class="group-title">关于</div>
     <div class="liquid-glass card">
-      <div class="row"><span class="row-label">版本</span><span class="row-val">1.6.7</span></div>
+      <div class="row"><span class="row-label">版本</span><span class="row-val">1.6.8</span></div>
       <div class="row"><span class="row-label">可调配置项</span><span class="row-val" id="conf-count">—</span></div>
       <div class="row tap" id="btn-privacy"><span class="row-label">隐私政策</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
       <div class="row tap" id="btn-terms"><span class="row-label">用户协议</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
@@ -1674,6 +1674,8 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
 
   /* ---------- 视图 ---------- */
   function switchView(name){
+    /* 切页时收起可能残留的账户面板 */
+    if(profileSheet && profileSheet.classList.contains('show')) closeProfile();
     currentNav = name;
     viewSections.forEach(function(sec){
       sec.classList.toggle('active', sec.getAttribute('data-view') === name);
@@ -1868,6 +1870,9 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
   function openProfile(){
     /* 滑动手势刚结束时浏览器可能补发一次 click，这里直接忽略 */
     if(Date.now() < clickBlockUntil) return;
+    /* 非设置页不允许弹出，避免切页/滚动后残留触发 */
+    var sec = document.querySelector('.view[data-view="settings"]');
+    if(!sec || !sec.classList.contains('active')) return;
     pendingAvatar = profile.avatar;
     inName.value = profile.name;
     inMail.value = profile.email;
