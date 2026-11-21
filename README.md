@@ -2,16 +2,36 @@
 
 一套 iOS 26 Liquid Glass 风格的移动端界面基座：底部 4 项主胶囊 + 独立搜索胶囊，带完整「设置」页可实时调节外观，并已沉淀出可复用的组件层与开发规约。
 
-- **单文件交付**：`index.html`，零外部依赖，断网可打开
+- **多文件工程结构**：视图逻辑与业务逻辑分离（`view-*.js` / `business.js`），样式独立为 `styles.css`
+- **PWA 可安装**：`manifest.json` + `sw.js`，添加主屏后独立窗口运行、离线可用
 - **仓库**：https://github.com/babyopen/DaoHang
-- **版本**：1.7.3
+- **版本**：1.7.4
 - **风格参考**：rdev/liquid-glass-react（本项目为纯 CSS 实现，未引入该库，无 WebGL 依赖）
 
 ---
 
+## 目录结构
+
+```
+index.html            页面结构 + 首帧主题内联脚本（避免刘海先闪黑）
+styles.css            全部样式：变量 / 玻璃容器 / 导航 / 卡片 / 按钮 / 表单控件 / 浮层
+manifest.json         PWA 清单（名称、图标、独立窗口、主题色）
+sw.js                 应用外壳缓存（导航网络优先、静态资源缓存优先）
+icons/                192 / 512 应用图标
+js/
+  business.js         数据与算法层：配置 schema、默认值区间、读写存储、颜色与主色计算
+  ui.js               公共 UI 层：DOM 引用、Toast、确认弹窗、复制、手势、键盘适配
+  view-settings.js    设置视图：主题 / 壁纸 / 应用配置 / 滑块 / 开关 / 账户面板 / 导入导出
+  view-search.js      搜索视图：设置项索引、结果渲染、双击恢复参数
+  view-components.js  组件库视图：组件初始化与文档区交互
+  main.js             启动：构建索引、首屏渲染、注册 Service Worker
+```
+
+加载顺序即上面的顺序，脚本为普通 `<script>`（非模块），共享顶层变量，无构建步骤。
+
 ## 快速开始
 
-直接用浏览器打开 `index.html` 即可；手机端建议「添加到主屏幕」以获得全屏与安全区体验。
+本地双击 `index.html` 也能跑（Service Worker 在 `file://` 下自动跳过）；要用 PWA / 离线缓存，需起一个 http 服务，例如 `python3 -m http.server 8080`，然后访问 `http://localhost:8080`。手机端建议「添加到主屏幕」，获得全屏、安全区与状态栏配色。
 
 部署到 GitHub Pages：仓库 Settings → Pages → 选择 `main` 分支根目录，保存后即可通过 Pages 地址访问。
 
@@ -346,6 +366,7 @@ showLoader('正在处理…'); hideLoader();
 
 | 版本 | 内容 |
 | --- | --- |
+| 1.7.4 | 工程拆分：`styles.css` + 6 个 JS 文件（business / ui / view-settings / view-search / view-components / main）；新增 PWA（manifest + sw + 图标），支持安装到主屏与离线打开 |
 | 1.7.3 | 下拉焦点管理（进入面板 / Tab 循环 / 归还焦点 + listbox 语义）；修复面板高度为 0 时向下溢出屏幕的定位 bug；性能模式下弹层与遮罩不再叠第二层模糊 |
 | 1.7.2 | 组件库每个组件下挂可折叠「代码 / 参数」区（12 组），代码块自动换行、一键复制，参数说明就近显示 |
 | 1.7.1 | 统一图标：文件顶部 `<symbol>` 图标集（9 个），替换 6 处字符 ✕、对勾、加号、步进加减与散落 SVG，尺寸/颜色统一由 `.i` 与 currentColor 控制 |
