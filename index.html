@@ -126,6 +126,13 @@ body.light .liquid-glass{
   background-size:120px 120px;
 }
 
+/* ================= WebGL 边缘折射层 ================= */
+#glass-gl{
+  position:fixed;inset:0;z-index:0;
+  width:100%;height:100%;
+  pointer-events:none;
+}
+
 /* ================= 页面容器 ================= */
 main{min-height:100%;padding:0 16px calc(130px + env(safe-area-inset-bottom));}
 .view{display:none;}
@@ -376,6 +383,7 @@ body.light .sheet .sheet-grab{background:rgba(0,0,0,.18);}
 
 <div class="wallpaper" id="wallpaper"></div>
 <div class="wall-dim" id="wall-dim"></div>
+<canvas id="glass-gl"></canvas>
 
 <main>
   <!-- ===== 视图：源 ===== -->
@@ -484,6 +492,10 @@ body.light .sheet .sheet-grab{background:rgba(0,0,0,.18);}
       <div class="row block">
         <div class="row-head"><span>投影强度</span><span class="row-val" id="val-shadow">0.32</span></div>
         <input type="range" id="r-shadow" min="0" max="0.8" step="0.01" />
+      </div>
+      <div class="row">
+        <span class="row-label">边缘折射（WebGL）</span>
+        <div class="switch" data-switch="webglRefract"></div>
       </div>
     </div>
 
@@ -749,6 +761,7 @@ body.light .sheet .sheet-grab{background:rgba(0,0,0,.18);}
     fontScale: 1,
     perfMode: false,
     doubleLayer: false,
+    webglRefract: true,
     wallpaper: '',
     wallPreset: '',
     wallBlur: 0,
@@ -1007,6 +1020,12 @@ body.light .sheet .sheet-grab{background:rgba(0,0,0,.18);}
     wallpaperEl.style.backgroundImage = css || 'none';
     body.classList.toggle('has-wall', !!css);
 
+    /* 背景变化时同步 WebGL 采样纹理 */
+    if(typeof GL !== 'undefined' && GL && GL.ok){
+      GL.needBg = true;
+      glLoadWallpaper();
+    }
+
     presetEls.forEach(function(el){
       el.classList.toggle('active',
         !conf.wallpaper && el.getAttribute('data-preset') === conf.wallPreset);
@@ -1109,6 +1128,7 @@ body.light .sheet .sheet-grab{background:rgba(0,0,0,.18);}
     layoutSeg(segIndicator, styleIdx);
 
     scheduleSave();
+    glSync();
     requestAnimationFrame(moveIndicator);
   }
 
@@ -1151,6 +1171,7 @@ body.light .sheet .sheet-grab{background:rgba(0,0,0,.18);}
     if(name === 'search' && searchInput){
       setTimeout(function(){ try{ searchInput.focus(); }catch(e){} }, 80);
     }
+    glAnimate(420);
   }
 
   navItems.forEach(function(el){
@@ -1329,6 +1350,7 @@ body.light .sheet .sheet-grab{background:rgba(0,0,0,.18);}
     body.classList.add('sheet-open');
     profileSheet.setAttribute('aria-hidden', 'false');
     setTimeout(function(){ try{ inName.focus(); }catch(e){} }, 320);
+    glAnimate(460);
   }
 
   function closeProfile(){
@@ -1336,6 +1358,7 @@ body.light .sheet .sheet-grab{background:rgba(0,0,0,.18);}
     profileMask.classList.remove('show');
     body.classList.remove('sheet-open');
     profileSheet.setAttribute('aria-hidden', 'true');
+    glAnimate(420);
   }
 
   acBox.addEventListener('click', openProfile);
@@ -1750,6 +1773,323 @@ body.light .sheet .sheet-grab{background:rgba(0,0,0,.18);}
       if(!resetOne(row)) toast('该项暂不支持单独重置');
     });
   });
+
+  /* ---------- WebGL 边缘折射（自写 shader，单文件无依赖） ---------- */
+  var PRESET_STOPS = {
+    aurora: ['#2b1b6b', '#5b3cc4', '#00d4ff'],
+    sunset: ['#3d1b4f', '#ff6a3d', '#ffd36e'],
+    ocean:  ['#04213a', '#0a6a8c', '#4fd1c5'],
+    sand:   ['#3a2f26', '#b08a5a', '#ecd6b0'],
+    mono:   ['#101014', '#3a3a44', '#6f6f7a']
+  };
+
+  var GL_VERT = [
+    'attribute vec2 aPos;',
+    'void main(){ gl_Position = vec4(aPos, 0.0, 1.0); }'
+  ].join('\n');
+
+  var GL_FRAG = [
+    'precision mediump float;',
+    'uniform sampler2D uBg;',
+    'uniform vec2 uRes;',
+    'uniform vec4 uRect;',
+    'uniform float uRadius;',
+    'uniform float uRing;',
+    'uniform float uRefract;',
+    'uniform float uChroma;',
+    'uniform float uHighlight;',
+    'float sdRound(vec2 p, vec2 b, float r){',
+    '  vec2 q = abs(p) - b + vec2(r, r);',
+    '  return length(max(q, vec2(0.0))) + min(max(q.x, q.y), 0.0) - r;',
+    '}',
+    'void main(){',
+    '  vec2 px = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);',
+    '  vec2 c = uRect.xy + uRect.zw * 0.5;',
+    '  vec2 hs = uRect.zw * 0.5;',
+    '  vec2 p = px - c;',
+    '  float d = sdRound(p, hs, uRadius);',
+    '  if(d > 0.0) discard;',
+    '  float depth = -d;',
+    '  if(depth > uRing) discard;',
+    '  float ring = 1.0 - depth / uRing;',
+    '  vec2 n = normalize(p + vec2(0.0001, 0.0001));',
+    '  vec2 off = -n * uRefract * pow(ring, 1.5);',
+    '  vec2 uvR = (px + off * (1.0 + uChroma)) / uRes;',
+    '  vec2 uvG = (px + off) / uRes;',
+    '  vec2 uvB = (px + off * (1.0 - uChroma)) / uRes;',
+    '  float cr = texture2D(uBg, vec2(uvR.x, 1.0 - uvR.y)).r;',
+    '  float cg = texture2D(uBg, vec2(uvG.x, 1.0 - uvG.y)).g;',
+    '  float cb = texture2D(uBg, vec2(uvB.x, 1.0 - uvB.y)).b;',
+    '  float top = clamp(1.0 - (p.y + hs.y) / max(hs.y * 2.0, 1.0), 0.0, 1.0);',
+    '  float hl = pow(ring, 3.2) * uHighlight * (0.5 + 0.7 * top);',
+    '  float shade = mix(0.8, 1.16, pow(ring, 0.62));',
+    '  vec3 col = vec3(cr, cg, cb) * shade + hl;',
+    '  float a = smoothstep(0.0, 0.3, ring);',
+    '  gl_FragColor = vec4(col, a * 0.92);',
+    '}'
+  ].join('\n');
+
+  var GL = {
+    ok: false, failed: false, cv: null, gl: null, prog: null,
+    posLoc: -1, tex: null, bgCv: null, wallImg: null,
+    needBg: true, u: {}
+  };
+  var glRaf = 0, glLoop = 0, glAnimEnd = 0;
+
+  function glCompile(gl, type, src){
+    var s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
+      console.warn('shader:', gl.getShaderInfoLog(s));
+      return null;
+    }
+    return s;
+  }
+
+  function glInit(){
+    var cv = document.getElementById('glass-gl');
+    if(!cv) return false;
+    var gl = null;
+    try {
+      gl = cv.getContext('webgl', { alpha:true, premultipliedAlpha:true, antialias:false, depth:false, stencil:false });
+    } catch(e){ gl = null; }
+    if(!gl){ GL.failed = true; return false; }
+
+    var vs = glCompile(gl, gl.VERTEX_SHADER, GL_VERT);
+    var fs = glCompile(gl, gl.FRAGMENT_SHADER, GL_FRAG);
+    if(!vs || !fs){ GL.failed = true; return false; }
+
+    var prog = gl.createProgram();
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
+    gl.linkProgram(prog);
+    if(!gl.getProgramParameter(prog, gl.LINK_STATUS)){
+      console.warn('link:', gl.getProgramInfoLog(prog));
+      GL.failed = true;
+      return false;
+    }
+
+    GL.gl = gl; GL.cv = cv; GL.prog = prog;
+    GL.posLoc = gl.getAttribLocation(prog, 'aPos');
+    GL.u = {
+      uBg: gl.getUniformLocation(prog, 'uBg'),
+      uRes: gl.getUniformLocation(prog, 'uRes'),
+      uRect: gl.getUniformLocation(prog, 'uRect'),
+      uRadius: gl.getUniformLocation(prog, 'uRadius'),
+      uRing: gl.getUniformLocation(prog, 'uRing'),
+      uRefract: gl.getUniformLocation(prog, 'uRefract'),
+      uChroma: gl.getUniformLocation(prog, 'uChroma'),
+      uHighlight: gl.getUniformLocation(prog, 'uHighlight')
+    };
+
+    var buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(GL.posLoc);
+    gl.vertexAttribPointer(GL.posLoc, 2, gl.FLOAT, false, 0, 0);
+
+    GL.tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, GL.tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    gl.disable(gl.DEPTH_TEST);
+    gl.enable(gl.BLEND);
+    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+    GL.ok = true;
+    GL.needBg = true;
+    cv.style.display = 'block';
+
+    cv.addEventListener('webglcontextlost', function(e){
+      e.preventDefault();
+      GL.ok = false;
+      GL.failed = false;
+      cv.style.display = 'none';
+      toast('WebGL 上下文丢失，已回退纯 CSS 玻璃');
+    }, false);
+
+    return true;
+  }
+
+  /* 把 CSS 背景在 2D canvas 里复刻一份，作为 shader 的采样源 */
+  function glDrawBackdrop(ctx, w, h, scale){
+    var light = body.classList.contains('light');
+    var hasWall = !!conf.wallpaper || !!conf.wallPreset;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = light ? '#f2f2f6' : '#000000';
+    ctx.fillRect(0, 0, w, h);
+
+    if(conf.wallpaper && GL.wallImg && GL.wallImg.width){
+      var iw = GL.wallImg.width, ih = GL.wallImg.height;
+      var s = Math.max(w / iw, h / ih) * 1.06;
+      var dw = iw * s, dh = ih * s;
+      if(conf.wallBlur > 0){
+        try { ctx.filter = 'blur(' + Math.max(0.5, conf.wallBlur * scale) + 'px)'; } catch(e){}
+      }
+      ctx.drawImage(GL.wallImg, (w - dw) / 2, (h - dh) / 2, dw, dh);
+      try { ctx.filter = 'none'; } catch(e){}
+    } else if(conf.wallPreset && PRESET_STOPS[conf.wallPreset]){
+      var stops = PRESET_STOPS[conf.wallPreset];
+      var rad = 140 * Math.PI / 180;
+      var dx = Math.sin(rad), dy = -Math.cos(rad);
+      var len = Math.abs(w * dx) + Math.abs(h * dy);
+      var g = ctx.createLinearGradient(
+        w / 2 - dx * len / 2, h / 2 - dy * len / 2,
+        w / 2 + dx * len / 2, h / 2 + dy * len / 2
+      );
+      g.addColorStop(0, stops[0]);
+      g.addColorStop(0.45, stops[1]);
+      g.addColorStop(1, stops[2]);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    if(hasWall){
+      var a = Math.max(0, Math.min(1, Number(conf.wallDim) || 0));
+      ctx.fillStyle = light ? 'rgba(255,255,255,' + a + ')' : 'rgba(0,0,0,' + a + ')';
+      ctx.fillRect(0, 0, w, h);
+    }
+  }
+
+  function glBuildBg(){
+    if(!GL.ok) return;
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    var w = Math.max(16, Math.round(window.innerWidth * dpr / 2));
+    var h = Math.max(16, Math.round(window.innerHeight * dpr / 2));
+    if(!GL.bgCv) GL.bgCv = document.createElement('canvas');
+    GL.bgCv.width = w;
+    GL.bgCv.height = h;
+    var ctx = GL.bgCv.getContext('2d');
+    glDrawBackdrop(ctx, w, h, dpr / 2);
+
+    var gl = GL.gl;
+    gl.bindTexture(gl.TEXTURE_2D, GL.tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, GL.bgCv);
+    GL.needBg = false;
+  }
+
+  function glLoadWallpaper(){
+    if(!GL.ok) return;
+    if(conf.wallpaper){
+      var img = new Image();
+      img.onload = function(){ GL.wallImg = img; GL.needBg = true; glSchedule(); };
+      img.onerror = function(){ GL.wallImg = null; GL.needBg = true; };
+      img.src = conf.wallpaper;
+    } else {
+      GL.wallImg = null;
+      GL.needBg = true;
+    }
+  }
+
+  function glRender(){
+    if(!GL.ok) return;
+    var gl = GL.gl;
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    var W = Math.round(window.innerWidth * dpr);
+    var H = Math.round(window.innerHeight * dpr);
+
+    if(GL.cv.width !== W || GL.cv.height !== H){
+      GL.cv.width = W;
+      GL.cv.height = H;
+      gl.viewport(0, 0, W, H);
+      GL.needBg = true;
+    }
+    if(GL.needBg) glBuildBg();
+
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.useProgram(GL.prog);
+    gl.uniform2f(GL.u.uRes, W, H);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, GL.tex);
+    gl.uniform1i(GL.u.uBg, 0);
+
+    gl.uniform1f(GL.u.uRing, 13 * dpr);
+    gl.uniform1f(GL.u.uRefract, (9 + conf.blur * 0.9) * dpr);
+    gl.uniform1f(GL.u.uChroma, (conf.chroma || 0) / 6 * 0.4);
+    gl.uniform1f(GL.u.uHighlight, 0.3 * (0.35 + conf.highlight));
+
+    gl.enable(gl.SCISSOR_TEST);
+    var targets = document.querySelectorAll('.liquid-glass');
+    for(var i = 0; i < targets.length; i++){
+      var el = targets[i];
+      var r = el.getBoundingClientRect();
+      if(r.width < 10 || r.height < 10) continue;
+      if(r.bottom <= 0 || r.top >= window.innerHeight) continue;
+
+      var rad = el.__glRad;
+      if(rad === null || rad === undefined){
+        rad = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
+        rad = Math.min(rad, Math.min(r.width, r.height) / 2);
+        el.__glRad = rad;
+      }
+      rad *= dpr;
+
+      var x = Math.round(r.left * dpr);
+      var yTop = Math.round(r.top * dpr);
+      var w = Math.round(r.width * dpr);
+      var h = Math.round(r.height * dpr);
+      if(w <= 0 || h <= 0) continue;
+
+      gl.scissor(x, H - yTop - h, w, h);
+      gl.uniform4f(GL.u.uRect, x, yTop, w, h);
+      gl.uniform1f(GL.u.uRadius, rad);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+    gl.disable(gl.SCISSOR_TEST);
+  }
+
+  function glSchedule(){
+    if(!GL.ok || glRaf) return;
+    glRaf = requestAnimationFrame(function(){ glRaf = 0; glRender(); });
+  }
+
+  function glAnimate(ms){
+    if(!GL.ok) return;
+    glAnimEnd = Math.max(glAnimEnd, Date.now() + (ms || 0));
+    if(glLoop) return;
+    glLoop = requestAnimationFrame(function step(){
+      glRender();
+      if(Date.now() < glAnimEnd) glLoop = requestAnimationFrame(step);
+      else glLoop = 0;
+    });
+  }
+
+  /* 圆角/尺寸相关参数变化时才重算圆角缓存，滚动时不再触发样式读取 */
+  var glRadiusKey = '';
+  function glCacheRadius(){
+    var key = [conf.radius, conf.cardRadius, conf.iconScale, conf.fontScale, conf.tabMin, conf.showLabel].join('|');
+    if(key === glRadiusKey) return;
+    glRadiusKey = key;
+    var els = document.querySelectorAll('.liquid-glass');
+    for(var i = 0; i < els.length; i++) els[i].__glRad = null;
+  }
+
+  function glSync(){
+    var cv = document.getElementById('glass-gl');
+    if(!conf.webglRefract || conf.perfMode){
+      if(cv) cv.style.display = 'none';
+      return;
+    }
+    if(!GL.ok){
+      if(GL.failed) return;
+      if(!glInit()){
+        toast('当前环境不支持 WebGL，已使用纯 CSS 玻璃');
+        return;
+      }
+      glLoadWallpaper();
+    }
+    glCacheRadius();
+    if(cv) cv.style.display = 'block';
+    glSchedule();
+  }
+
+  window.addEventListener('scroll', function(){ glSchedule(); }, { passive:true });
+  window.addEventListener('resize', function(){ GL.needBg = true; glSchedule(); });
 
   /* ---------- 滚动收起 ---------- */
   var lastScrollY = window.scrollY;
