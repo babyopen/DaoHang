@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.6.1
+  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.6.2
   ================================================================
   文件结构索引
     style 区块
@@ -56,10 +56,18 @@ body{
   overflow-x:hidden;
 }
 body.light{color:#1c1c1e;}
+body.light{
+  --wall-default:
+    radial-gradient(120% 85% at 12% -10%, rgba(150,170,255,.65) 0%, rgba(150,170,255,0) 60%),
+    radial-gradient(110% 80% at 92% 2%, rgba(255,196,222,.55) 0%, rgba(255,196,222,0) 58%),
+    radial-gradient(90% 60% at 50% 110%, rgba(170,230,235,.40) 0%, rgba(170,230,235,0) 62%),
+    linear-gradient(180deg,#f8f9fd 0%,#eef1f8 55%,#e8ecf4 100%);
+}
 
 /* ================= 壁纸背景层 ================= */
 .wallpaper{
   position:fixed;inset:0;z-index:-2;
+  background-image:var(--wall-default);
   background-position:center;
   background-size:cover;
   background-repeat:no-repeat;
@@ -69,7 +77,7 @@ body.light{color:#1c1c1e;}
 }
 .wall-dim{
   position:fixed;inset:0;z-index:-1;pointer-events:none;
-  background:#000;
+  background:transparent;
   transition:background .3s;
 }
 body.light .wall-dim{background:#f2f2f6;}
@@ -91,6 +99,12 @@ body.has-wall.light .wall-dim{background:rgba(255,255,255,var(--wall-dim-a,.35))
   --lg-chroma-a:0;
   --wall-blur:0px;
   --wall-dim-a:.35;
+  /* 未设置壁纸/预设时的默认背景渐变 */
+  --wall-default:
+    radial-gradient(120% 85% at 12% -10%, rgba(74,60,158,.42) 0%, rgba(74,60,158,0) 62%),
+    radial-gradient(110% 80% at 92% 2%, rgba(20,80,158,.34) 0%, rgba(20,80,158,0) 58%),
+    radial-gradient(90% 60% at 50% 108%, rgba(28,132,152,.20) 0%, rgba(28,132,152,0) 64%),
+    linear-gradient(180deg,#0b0b14 0%,#07070c 55%,#050508 100%);
   --lg-line:rgba(255,255,255,.08);
   --indicator-color:rgba(50,140,255,.32);
   --indicator-strong:rgba(50,140,255,.8);
@@ -950,7 +964,7 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
     <!-- 关于 -->
     <div class="group-title">关于</div>
     <div class="liquid-glass card">
-      <div class="row"><span class="row-label">版本</span><span class="row-val">1.6.1</span></div>
+      <div class="row"><span class="row-label">版本</span><span class="row-val">1.6.2</span></div>
       <div class="row"><span class="row-label">可调配置项</span><span class="row-val" id="conf-count">—</span></div>
       <div class="row tap" id="btn-privacy"><span class="row-label">隐私政策</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
       <div class="row tap" id="btn-terms"><span class="row-label">用户协议</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
@@ -1445,7 +1459,7 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
     if(conf.wallpaper) css = 'url("' + conf.wallpaper + '")';
     else if(conf.wallPreset && PRESETS[conf.wallPreset]) css = PRESETS[conf.wallPreset].css;
 
-    wallpaperEl.style.backgroundImage = css || 'none';
+    wallpaperEl.style.backgroundImage = css || '';
     body.classList.toggle('has-wall', !!css);
 
 
@@ -1566,7 +1580,7 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
     valSoloW.textContent = fmtOff(conf.soloW, 0) + ' px';
     valSoloIcon.textContent = fmtOff(conf.soloIcon, 0) + ' px';
     valSoloRadius.textContent = fmtOff(conf.soloRadius, 0) + ' px';
-    wallState.textContent = conf.wallpaper ? '自定义图片' : (conf.wallPreset ? '预设渐变' : '未设置');
+    wallState.textContent = conf.wallpaper ? '自定义图片' : (conf.wallPreset ? '预设渐变' : '默认渐变');
 
     switches.forEach(function(el){
       el.classList.toggle('on', !!conf[el.getAttribute('data-switch')]);
