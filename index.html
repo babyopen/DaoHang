@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <!--
-  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.6.0
+  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.6.1
   ================================================================
   文件结构索引
     style 区块
-      1  变量与深浅主题        2  通用玻璃容器（::before 双层 / ::after 噪点）
+      1  变量与深浅主题        2  通用玻璃容器（::after 噪点）
       3  页面容器 .view        4  卡片 / 列表行
       5  账户卡片 / 分组标题    6  分段控件 / 开关 / 滑块（中点标记）
       7  导航胶囊与指示器       8  Toast
@@ -130,28 +130,8 @@ body.light{
   -webkit-backface-visibility:hidden;
 }
 
-/* 双层玻璃背板：内嵌薄壳环 */
-.liquid-glass::before{
-  content:'';position:absolute;inset:4px;pointer-events:none;
-  border-radius:calc(var(--card-radius) - 4px);
-  border:1px solid rgba(255,255,255,calc(var(--lg-border-a) * .8));
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.03),
-    inset 0 6px 12px -8px rgba(255,255,255,calc(var(--lg-highlight) * .9));
-  opacity:0;
-  transition:opacity .25s;
-}
-body.light .liquid-glass::before{
-  border-color:rgba(0,0,0,calc(var(--lg-border-a) * .8));
-  box-shadow:
-    inset 0 0 0 1px rgba(0,0,0,.02),
-    inset 0 6px 12px -8px rgba(255,255,255,.9);
-}
-body.double-layer .liquid-glass::before{opacity:1;}
-
 /* 导航胶囊的背板圆角跟随胶囊半径 */
 .glass-capsule.liquid-glass{border-radius:var(--bar-radius);}
-.glass-capsule.liquid-glass::before{border-radius:calc(var(--bar-radius) - 4px);}
 body.light .liquid-glass{
   background:rgba(var(--lg-tint-light),calc(var(--lg-opacity) + .2));
   border-color:rgba(0,0,0,var(--lg-border-a));
@@ -749,10 +729,6 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
         <div class="row-head"><span>卡片圆角</span><span class="row-val" id="val-card-radius">20 px</span></div>
         <input type="range" id="r-card-radius" min="-20" max="20" step="1" />
       </div>
-      <div class="row">
-        <span class="row-label">双层玻璃背板</span>
-        <div class="switch" data-switch="doubleLayer"></div>
-      </div>
     </div>
 
     <!-- 导航栏 -->
@@ -974,7 +950,7 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
     <!-- 关于 -->
     <div class="group-title">关于</div>
     <div class="liquid-glass card">
-      <div class="row"><span class="row-label">版本</span><span class="row-val">1.6.0</span></div>
+      <div class="row"><span class="row-label">版本</span><span class="row-val">1.6.1</span></div>
       <div class="row"><span class="row-label">可调配置项</span><span class="row-val" id="conf-count">—</span></div>
       <div class="row tap" id="btn-privacy"><span class="row-label">隐私政策</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
       <div class="row tap" id="btn-terms"><span class="row-label">用户协议</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
@@ -1172,7 +1148,6 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
     groupFont: 0,
     h1Font: 0,
     perfMode: false,
-    doubleLayer: false,
     wallpaper: '',
     wallPreset: '',
     wallBlur: 0,
@@ -1532,7 +1507,6 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
       : 'none');
 
     body.classList.toggle('no-label', !conf.showLabel);
-    body.classList.toggle('double-layer', !!conf.doubleLayer);
     body.classList.toggle('active-scale', !!conf.activeScale);
     body.classList.toggle('perf', !!conf.perfMode);
     indicator.classList.toggle('ring', conf.indicatorStyle === 'ring');
