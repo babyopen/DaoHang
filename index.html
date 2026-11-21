@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.6.3
+  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.6.4
   ================================================================
   文件结构索引
     style 区块
@@ -40,11 +40,11 @@
     · 数值参数一律存「偏移量」：conf 里 0 = 默认外观，渲染必须经 eff(key)
       取基准值再夹紧（BASE_VARIANTS / BASE_CONF + LIMIT），不要直接读 conf 数值。
 -->
-<html lang="zh-CN">
+<html lang="zh-CN" style="background:#050508">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#000000" />
+<meta name="theme-color" content="#0b0b14" />
 <title>Liquid Glass · 设置</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -170,7 +170,7 @@ main{min-height:100%;padding:0 16px calc(130px + env(safe-area-inset-bottom));}
 .view.active .page-head{animation:headIn .24s ease both;}
 @keyframes headIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
 
-.page-head{padding:34px 4px 14px;}
+.page-head{padding:calc(34px + env(safe-area-inset-top)) 4px 14px;}
 .page-head h1{font-size:var(--fs-h1,30px);font-weight:700;letter-spacing:-.6px;transition:font-size .15s;}
 .page-sub{margin-top:6px;font-size:13px;opacity:.55;}
 
@@ -964,7 +964,7 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
     <!-- 关于 -->
     <div class="group-title">关于</div>
     <div class="liquid-glass card">
-      <div class="row"><span class="row-label">版本</span><span class="row-val">1.6.3</span></div>
+      <div class="row"><span class="row-label">版本</span><span class="row-val">1.6.4</span></div>
       <div class="row"><span class="row-label">可调配置项</span><span class="row-val" id="conf-count">—</span></div>
       <div class="row tap" id="btn-privacy"><span class="row-label">隐私政策</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
       <div class="row tap" id="btn-terms"><span class="row-label">用户协议</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
@@ -1523,6 +1523,12 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
     body.classList.toggle('no-label', !conf.showLabel);
     body.classList.toggle('active-scale', !!conf.activeScale);
     body.classList.toggle('perf', !!conf.perfMode);
+    /* 顶部状态栏/地址栏颜色跟随页面背景，避免出现黑块 */
+    var isLight = (effectiveTheme() === 'light');
+    var bgBase = isLight ? '#f8f9fd' : '#0b0b14';
+    document.documentElement.style.background = bgBase;
+    var themeMeta = document.querySelector('meta[name="theme-color"]');
+    if(themeMeta) themeMeta.setAttribute('content', bgBase);
     indicator.classList.toggle('ring', conf.indicatorStyle === 'ring');
 
     applyTheme();
