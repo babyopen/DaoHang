@@ -4,7 +4,7 @@
 
 - **单文件交付**：`index.html`，零外部依赖，断网可打开
 - **仓库**：https://github.com/babyopen/DaoHang
-- **版本**：1.6.8
+- **版本**：1.6.9
 - **风格参考**：rdev/liquid-glass-react（本项目为纯 CSS 实现，未引入该库，无 WebGL 依赖）
 
 ---
@@ -205,6 +205,81 @@ confirmDialog({
 </div>
 ```
 
+### 复选框 / 单选框
+
+```html
+<label class="checkbox"><input type="checkbox" checked><span class="box"></span><span class="cb-text">已选</span></label>
+<label class="radio"><input type="radio" name="g"><span class="box"></span><span class="cb-text">选项 A</span></label>
+<label class="checkbox is-disabled"><input type="checkbox" disabled><span class="box"></span><span class="cb-text">禁用</span></label>
+```
+
+原生 input 只在视觉层隐藏，`checked / disabled` 照常工作，可直接接表单。
+
+### 下拉选择
+
+```html
+<div class="select" data-value="">
+  <button class="select-trigger" type="button" aria-expanded="false">
+    <span class="select-value">请选择</span>
+    <svg class="select-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </button>
+  <!-- 仅作数据声明，初始化后自动移除 -->
+  <div class="select-option" data-value="a">选项 A</div>
+  <div class="select-option is-disabled" data-value="b">禁用项</div>
+</div>
+```
+
+```js
+var sel = initSelect(document.querySelector('.select'));
+sel.onChange(function(value, label){ /* 业务回调 */ });
+sel.set('a'); sel.value; // 读当前值
+```
+
+面板自动挂到 body、自动改上/下方向避让、支持搜索过滤、Esc / 点外部关闭。
+
+### 进度条
+
+```html
+<div class="progress"><div class="progress-fill" style="width:60%"></div></div>
+<div class="progress is-indeterminate"><div class="progress-fill"></div></div>
+```
+`setProgress(el, 62)` 返回夹紧后的值。
+
+### 页面内提示
+
+```html
+<div class="notice notice-warn"><div class="notice-icon">!</div>
+  <div class="notice-body"><div class="notice-title">注意</div><div class="notice-text">说明文案</div></div>
+  <button class="notice-close" type="button">✕</button></div>
+```
+类型：`notice-success / notice-warn / notice-danger / notice-info`。
+
+### 标签
+
+```html
+<span class="tag">默认</span>
+<span class="tag primary">主色</span>
+<span class="tag">可关闭<button class="tag-x" type="button">✕</button></span>
+```
+
+### 步进器
+
+```html
+<div class="stepper" data-min="1" data-max="99" data-value="3">
+  <button class="step-btn" data-act="minus">−</button>
+  <input class="step-val" type="number" value="3">
+  <button class="step-btn" data-act="plus">+</button>
+</div>
+```
+`initStepper(el)`：自动夹紧、首尾态禁用按钮、长按连续增减。
+
+### 全屏加载遮罩
+
+```js
+showLoader('正在处理…'); hideLoader();
+```
+`
+
 ### 新增一个页面
 
 1. 在 `main` 内追加 `<section class="view" data-view="xxx">…</section>`
@@ -252,6 +327,7 @@ confirmDialog({
 
 | 版本 | 内容 |
 | --- | --- |
+| 1.6.9 | 新增复选/单选、自定义下拉（含搜索）、进度条、页面内提示块、标签、数字步进器、全屏加载遮罩，全部进组件预览区 |
 | 1.6.8 | 账户面板只在设置页可打开（非设置页触发直接忽略），切换视图自动收起，杜绝切页/滚动后残留显示 |
 | 1.6.7 | 修复键盘弹起时未打开的账户面板被顶到键盘上方露出（kb-open 抬升仅对 `.show` 生效 + 未打开时 visibility:hidden）；刘海安全区：加 apple 状态栏 translucent、首帧前按主题预置 html 底色与 theme-color |
 | 1.6.6 | 「显示模式」行显示当前实际模式（固定 · 深色 / 系统 · 浅色），选择跟随系统与系统切换时给出 Toast 提示，便于确认是否生效 |

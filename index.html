@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.6.8
+  DaoHang · 液态玻璃移动端 UI 模板（单文件版）v1.6.9
   ================================================================
   文件结构索引
     style 区块
@@ -473,6 +473,129 @@ body.light .btn.secondary{border-color:rgba(0,0,0,var(--lg-border-a));}
 .pv-label{font-size:12px;font-weight:600;letter-spacing:.3px;opacity:.42;margin-bottom:10px;}
 .pv-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
 .pv-row .btn{flex:0 0 auto;min-width:76px;}
+
+/* ================= 表单控件：复选 / 单选 / 下拉 / 进度 / 提示 / 标签 / 步进 ================= */
+.checkbox,.radio{display:inline-flex;align-items:center;gap:9px;font-size:var(--fs-row,15px);cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;transition:opacity .2s;}
+.checkbox input,.radio input{position:absolute;opacity:0;width:0;height:0;pointer-events:none;}
+.checkbox .box,.radio .box{
+  width:22px;height:22px;flex:0 0 auto;position:relative;
+  background:rgba(120,120,120,.16);
+  box-shadow:inset 0 0 0 1px rgba(127,127,127,.34), inset 0 1px 0 rgba(255,255,255,.06);
+  transition:background .2s ease,box-shadow .2s ease,transform .18s cubic-bezier(.34,1.56,.64,1);
+}
+.checkbox .box{border-radius:7px;}
+.radio .box{border-radius:50%;}
+.checkbox input:checked + .box,.radio input:checked + .box{background:var(--thumb-on,#3b8cff);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2), 0 4px 12px -2px rgba(59,140,255,.45);}
+.checkbox input:checked + .box::after{
+  content:'';position:absolute;left:7.5px;top:3.6px;width:5px;height:9.5px;
+  border-right:2px solid #fff;border-bottom:2px solid #fff;border-radius:1px;
+  transform:rotate(42deg);transform-origin:center;
+}
+.radio input:checked + .box::after{
+  content:'';position:absolute;inset:0;margin:auto;width:8px;height:8px;border-radius:50%;background:#fff;
+}
+.checkbox input:active + .box,.radio input:active + .box{transform:scale(.92);}
+.checkbox.is-disabled,.radio.is-disabled{opacity:.42;pointer-events:none;}
+.checkbox .cb-text,.radio .cb-text{color:var(--text-normal);}
+
+/* 自定义下拉：面板提升到 body，避免被卡片裁剪 */
+.select{position:relative;display:block;}
+.select-trigger{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
+  padding:11px 14px;border:none;border-radius:12px;color:var(--text-normal);
+  font-size:var(--fs-row,15px);font-family:inherit;text-align:left;cursor:pointer;
+  background:rgba(120,120,120,.14);
+  box-shadow:inset 0 0 0 1px rgba(127,127,127,.28), inset 0 1px 0 rgba(255,255,255,.06);
+  transition:box-shadow .2s,background .2s;
+}
+.select-trigger[aria-expanded="true"]{box-shadow:inset 0 0 0 1px var(--indicator-strong,rgba(50,140,255,.8)), inset 0 1px 0 rgba(255,255,255,.08);}
+.select-value{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.select-value.is-placeholder{opacity:.45;}
+.select-chev{width:16px;height:16px;flex:0 0 auto;opacity:.5;transition:transform .25s;}
+.select-trigger[aria-expanded="true"] .select-chev{transform:rotate(180deg);}
+.select.is-disabled{opacity:.42;pointer-events:none;}
+.select-panel{
+  position:fixed;z-index:360;display:none;flex-direction:column;
+  padding:6px;border-radius:14px;overflow:hidden;
+  background:rgba(28,28,34,.92);border:1px solid rgba(255,255,255,.10);
+  box-shadow:0 18px 44px -12px rgba(0,0,0,.6);
+  backdrop-filter:blur(26px) saturate(140%);-webkit-backdrop-filter:blur(26px) saturate(140%);
+  color:var(--text-normal);
+  opacity:0;transform:translateY(-4px);transition:opacity .16s ease,transform .16s ease;
+}
+body.light .select-panel{background:rgba(250,250,253,.92);border-color:rgba(0,0,0,.08);}
+.select-panel.show{display:flex;opacity:1;transform:translateY(0);}
+.select-search{padding:8px 10px 6px;}
+.select-search input{
+  width:100%;padding:8px 10px;border:none;border-radius:9px;font-family:inherit;
+  font-size:max(15px,var(--fs-row,15px));color:var(--text-normal);
+  background:rgba(127,127,127,.16);outline:none;
+}
+.select-search input::placeholder{color:currentColor;opacity:.4;}
+.select-list{max-height:240px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
+.select-option{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 12px;border-radius:9px;font-size:var(--fs-row,15px);cursor:pointer;
+}
+.select-option.active,.select-option:hover{background:rgba(127,127,127,.16);}
+.select-option.is-selected{color:var(--text-active,#64a8ff);}
+.select-option.is-checked::after{content:'✓';font-size:13px;font-weight:600;}
+.select-option.is-disabled{opacity:.35;pointer-events:none;}
+.select-empty{padding:16px;text-align:center;font-size:13px;opacity:.45;}
+
+/* 进度条 */
+.progress{position:relative;height:6px;border-radius:999px;overflow:hidden;background:rgba(127,127,127,.22);}
+.progress-fill{height:100%;width:0;border-radius:999px;background:var(--thumb-on,#3b8cff);transition:width .35s cubic-bezier(.34,1.2,.64,1);}
+.progress.is-indeterminate .progress-fill{width:36%;animation:progFlow 1.25s ease-in-out infinite;}
+@keyframes progFlow{0%{transform:translateX(-110%);}100%{transform:translateX(310%);}}
+.progress-row{display:flex;align-items:center;gap:12px;font-size:12px;opacity:.7;}
+.progress-row .progress{flex:1;}
+
+/* 页面内提示块 */
+.notice{
+  display:flex;gap:11px;align-items:flex-start;padding:13px 14px;border-radius:14px;
+  font-size:13.5px;line-height:1.5;
+  background:rgba(127,127,127,.13);
+  box-shadow:inset 0 0 0 1px rgba(127,127,127,.18);
+}
+.notice-icon{flex:0 0 auto;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;margin-top:1px;}
+.notice-body{flex:1;min-width:0;}
+.notice-title{font-weight:600;margin-bottom:2px;}
+.notice-text{opacity:.72;}
+.notice-close{flex:0 0 auto;border:none;background:none;color:inherit;opacity:.45;font-size:14px;line-height:1;padding:2px;cursor:pointer;}
+.notice-success .notice-icon{background:#2bb673;}.notice-success{box-shadow:inset 0 0 0 1px rgba(43,182,115,.34);}
+.notice-warn .notice-icon{background:#f0a020;}.notice-warn{box-shadow:inset 0 0 0 1px rgba(240,160,32,.34);}
+.notice-danger .notice-icon{background:#e5484d;}.notice-danger{box-shadow:inset 0 0 0 1px rgba(229,72,77,.34);}
+.notice-info .notice-icon{background:#3b8cff;}.notice-info{box-shadow:inset 0 0 0 1px rgba(59,140,255,.34);}
+
+/* 标签 */
+.tag{
+  display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;
+  font-size:12.5px;line-height:1.2;color:var(--text-normal);
+  background:rgba(127,127,127,.16);
+  box-shadow:inset 0 0 0 1px rgba(127,127,127,.2);
+}
+.tag.primary{background:rgba(59,140,255,.16);color:var(--text-active,#64a8ff);box-shadow:inset 0 0 0 1px rgba(59,140,255,.3);}
+.tag .tag-x{border:none;background:none;color:inherit;opacity:.5;font-size:13px;line-height:1;padding:0;cursor:pointer;}
+.tag .tag-x:hover{opacity:.9;}
+.tag.closing{opacity:0;transform:scale(.9);transition:opacity .18s,transform .18s;}
+
+/* 数字步进器 */
+.stepper{display:inline-flex;align-items:center;border-radius:11px;overflow:hidden;background:rgba(127,127,127,.14);box-shadow:inset 0 0 0 1px rgba(127,127,127,.26);}
+.step-btn{width:38px;height:38px;border:none;background:none;color:var(--text-normal);font-size:18px;line-height:1;cursor:pointer;transition:background .18s;}
+.step-btn:active{background:rgba(127,127,127,.24);}
+.step-btn:disabled{opacity:.3;pointer-events:none;}
+.step-val{width:52px;height:38px;border:none;background:none;text-align:center;color:var(--text-normal);font-size:max(15px,var(--fs-row,15px));font-family:inherit;outline:none;-moz-appearance:textfield;}
+.step-val::-webkit-outer-spin-button,.step-val::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+
+/* 全屏加载遮罩 */
+.loader{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:rgba(0,0,0,.34);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);opacity:0;transition:opacity .2s;}
+.loader.show{display:flex;opacity:1;}
+.loader-card{padding:20px 26px;border-radius:16px;display:flex;flex-direction:column;align-items:center;gap:12px;background:rgba(30,30,36,.86);box-shadow:0 16px 40px -10px rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.1);}
+body.light .loader-card{background:rgba(255,255,255,.9);border-color:rgba(0,0,0,.06);}
+.loader-ring{width:26px;height:26px;border-radius:50%;border:2.5px solid rgba(127,127,127,.3);border-top-color:var(--thumb-on,#3b8cff);animation:spin .75s linear infinite;}
+.loader-text{font-size:13px;color:var(--text-normal);}
+
 
 /* ================= 通用组件：分割线 / 徽标 / 空态 / 列表项 ================= */
 .divider{height:1px;background:var(--lg-line);margin:0 16px;}
@@ -950,6 +1073,66 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
       </div>
 
       <div class="pv-block">
+        <div class="pv-label">复选 / 单选 .checkbox / .radio</div>
+        <div class="pv-row" style="gap:18px;">
+          <label class="checkbox"><input type="checkbox" checked><span class="box"></span><span class="cb-text">已选</span></label>
+          <label class="checkbox"><input type="checkbox"><span class="box"></span><span class="cb-text">未选</span></label>
+          <label class="checkbox is-disabled"><input type="checkbox" disabled><span class="box"></span><span class="cb-text">禁用</span></label>
+        </div>
+        <div class="pv-row" style="gap:18px;margin-top:12px;">
+          <label class="radio"><input type="radio" name="pv-radio" checked><span class="box"></span><span class="cb-text">选项 A</span></label>
+          <label class="radio"><input type="radio" name="pv-radio"><span class="box"></span><span class="cb-text">选项 B</span></label>
+        </div>
+      </div>
+
+      <div class="pv-block">
+        <div class="pv-label">下拉选择 .select（支持搜索）</div>
+        <div class="select" id="pv-select">
+          <button class="select-trigger" type="button" aria-expanded="false">
+            <span class="select-value">请选择</span>
+            <svg class="select-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="pv-block">
+        <div class="pv-label">进度条 .progress</div>
+        <div class="progress-row"><span>确定进度</span><div class="progress" id="pv-prog" data-value="62"><div class="progress-fill" style="width:62%"></div></div><span id="pv-prog-val">62%</span></div>
+        <div class="progress-row" style="margin-top:12px;"><span>不确定</span><div class="progress is-indeterminate"><div class="progress-fill"></div></div><span>—</span></div>
+      </div>
+
+      <div class="pv-block">
+        <div class="pv-label">页面内提示 .notice</div>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          <div class="notice notice-success"><div class="notice-icon">✓</div><div class="notice-body"><div class="notice-title">保存成功</div><div class="notice-text">配置已写入本地存储。</div></div></div>
+          <div class="notice notice-warn"><div class="notice-icon">!</div><div class="notice-body"><div class="notice-title">注意</div><div class="notice-text">恢复默认会清空当前主题参数。</div></div><button class="notice-close" type="button" aria-label="关闭">✕</button></div>
+          <div class="notice notice-info"><div class="notice-icon">i</div><div class="notice-body"><div class="notice-text">提示块用于页面内常驻说明，不打断操作。</div></div></div>
+        </div>
+      </div>
+
+      <div class="pv-block">
+        <div class="pv-label">标签 .tag</div>
+        <div class="pv-row">
+          <span class="tag">默认标签</span>
+          <span class="tag primary">主色标签</span>
+          <span class="tag closable">可关闭<button class="tag-x" type="button" aria-label="移除">✕</button></span>
+          <span class="tag closable">可关闭<button class="tag-x" type="button" aria-label="移除">✕</button></span>
+        </div>
+      </div>
+
+      <div class="pv-block">
+        <div class="pv-label">步进器 .stepper / 加载遮罩</div>
+        <div class="pv-row" style="gap:12px;">
+          <div class="stepper" data-min="1" data-max="99" data-value="3">
+            <button class="step-btn" type="button" data-act="minus">−</button>
+            <input class="step-val" type="number" value="3" inputmode="numeric" aria-label="数量">
+            <button class="step-btn" type="button" data-act="plus">+</button>
+          </div>
+          <button class="btn sm secondary" id="pv-loader" type="button">显示加载遮罩</button>
+        </div>
+      </div>
+
+      <div class="pv-block">
         <div class="pv-label">提示与对话</div>
         <div class="pv-row">
           <button class="btn sm secondary" id="pv-toast-ok" type="button">成功提示</button>
@@ -988,7 +1171,7 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
     <!-- 关于 -->
     <div class="group-title">关于</div>
     <div class="liquid-glass card">
-      <div class="row"><span class="row-label">版本</span><span class="row-val">1.6.8</span></div>
+      <div class="row"><span class="row-label">版本</span><span class="row-val">1.6.9</span></div>
       <div class="row"><span class="row-label">可调配置项</span><span class="row-val" id="conf-count">—</span></div>
       <div class="row tap" id="btn-privacy"><span class="row-label">隐私政策</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
       <div class="row tap" id="btn-terms"><span class="row-label">用户协议</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
@@ -1042,6 +1225,9 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
 </nav>
 
 <div class="toast" id="toast"></div>
+<div class="loader" id="loader" role="status" aria-live="polite">
+  <div class="loader-card"><div class="loader-ring"></div><div class="loader-text" id="loader-text">加载中…</div></div>
+</div>
 
 <!-- 居中确认弹窗 -->
 <div class="dlg-mask" id="dlg-mask"></div>
@@ -2211,9 +2397,212 @@ body.kb-open .tabbar-wrap{opacity:0;pointer-events:none;transform:translate(-50%
     }, { passive:true });
   }
 
+  /* ---------- 表单控件：下拉 / 步进 / 标签 / 提示 / 加载遮罩 ---------- */
+  function initSelect(el){
+    var trigger = el.querySelector('.select-trigger');
+    var valEl = el.querySelector('.select-value');
+    var panel = document.createElement('div');
+    panel.className = 'select-panel';
+    panel.innerHTML = '<div class="select-search"><input type="text" placeholder="搜索选项" aria-label="搜索选项"></div><div class="select-list"></div>';
+    document.body.appendChild(panel);
+    var input = panel.querySelector('input');
+    var list = panel.querySelector('.select-list');
+    var value = el.getAttribute('data-value') || '';
+    var options = [];
+
+    function readOptions(){
+      options = [];
+      var src = el.querySelectorAll('.select-option');
+      for(var i=0;i<src.length;i++){
+        options.push({ value:src[i].getAttribute('data-value'), label:src[i].getAttribute('data-label') || src[i].textContent.trim(), disabled:src[i].classList.contains('is-disabled') });
+      }
+      /* 源节点只作数据声明，读完即移除，避免与面板项重复显示 */
+      for(var k=src.length-1;k>=0;k--){ src[k].parentNode.removeChild(src[k]); }
+      if(!options.length){
+        list.innerHTML = '<div class="select-empty">暂无选项</div>';
+        return;
+      }
+      render('');
+    }
+    function render(kw){
+      var html = '';
+      var count = 0;
+      for(var i=0;i<options.length;i++){
+        var o = options[i];
+        if(kw && o.label.toLowerCase().indexOf(kw.toLowerCase()) === -1) continue;
+        count++;
+        html += '<div class="select-option' + (o.value === value ? ' is-selected is-checked' : '') + (o.disabled ? ' is-disabled' : '') + '" data-value="' + o.value + '">' + o.label + '</div>';
+      }
+      list.innerHTML = html || '<div class="select-empty">没有匹配项</div>';
+    }
+    function place(){
+      var r = trigger.getBoundingClientRect();
+      var w = r.width;
+      var ph = Math.min(panel.offsetHeight || 260, 300);
+      var below = window.innerHeight - r.bottom - 12;
+      var top = below >= Math.min(ph, 180) ? r.bottom + 6 : Math.max(10, r.top - ph - 6);
+      panel.style.left = r.left + 'px';
+      panel.style.width = w + 'px';
+      panel.style.top = top + 'px';
+    }
+    function open(){
+      if(!el.classList.contains('select-panel-open')){
+        el.classList.add('select-panel-open');
+      }
+      panel.classList.add('show');
+      trigger.setAttribute('aria-expanded','true');
+      if(!options.length) readOptions(); else render('');
+      place();
+      input.value = '';
+      setTimeout(function(){ if(!('ontouchstart' in window)) input.focus(); }, 30);
+    }
+    function close(){
+      panel.classList.remove('show');
+      trigger.setAttribute('aria-expanded','false');
+      el.classList.remove('select-panel-open');
+    }
+    function pick(v){
+      value = v;
+      var label = v;
+      for(var i=0;i<options.length;i++){ if(options[i].value === v) label = options[i].label; }
+      valEl.textContent = label;
+      valEl.classList.toggle('is-placeholder', !v);
+      close();
+      if(typeof el.__onChange === 'function') el.__onChange(v, label);
+    }
+    trigger.addEventListener('click', function(e){
+      e.stopPropagation();
+      if(panel.classList.contains('show')) close(); else open();
+    });
+    list.addEventListener('click', function(e){
+      var o = e.target.closest('.select-option');
+      if(o) pick(o.getAttribute('data-value'));
+    });
+    input.addEventListener('input', function(){ render(input.value.trim()); });
+    document.addEventListener('click', function(e){
+      if(panel.classList.contains('show') && !panel.contains(e.target) && !el.contains(e.target)) close();
+    });
+    window.addEventListener('resize', function(){ if(panel.classList.contains('show')) place(); });
+    window.addEventListener('scroll', function(){ if(panel.classList.contains('show')) place(); }, true);
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && panel.classList.contains('show')) close(); });
+
+    var api = {
+      get value(){ return value; },
+      set: function(v){ pick(v); },
+      onChange: function(fn){ el.__onChange = fn; }
+    };
+    readOptions();
+    el.__select = api;
+    return api;
+  }
+
+  function initStepper(el){
+    var min = Number(el.getAttribute('data-min') || 0);
+    var max = Number(el.getAttribute('data-max') || 99);
+    var input = el.querySelector('.step-val');
+    var minus = el.querySelector('[data-act="minus"]');
+    var plus = el.querySelector('[data-act="plus"]');
+    var timer = null;
+    function clamp(n){ return Math.max(min, Math.min(max, n)); }
+    function sync(){
+      var v = clamp(Math.round(Number(input.value) || min));
+      input.value = v;
+      minus.disabled = v <= min;
+      plus.disabled = v >= max;
+    }
+    function step(d){
+      input.value = clamp((Number(input.value) || 0) + d);
+      sync();
+    }
+    function startHold(d){
+      step(d);
+      timer = setTimeout(function repeat(){ step(d); timer = setTimeout(repeat, 90); }, 420);
+    }
+    function stopHold(){ clearTimeout(timer); }
+    minus.addEventListener('click', function(){ step(-1); });
+    plus.addEventListener('click', function(){ step(1); });
+    ['mousedown','touchstart'].forEach(function(ev){
+      minus.addEventListener(ev, function(){ startHold(-1); });
+      plus.addEventListener(ev, function(){ startHold(1); });
+    });
+    ['mouseup','mouseleave','touchend','touchcancel'].forEach(function(ev){
+      minus.addEventListener(ev, stopHold);
+      plus.addEventListener(ev, stopHold);
+    });
+    input.addEventListener('input', sync);
+    input.addEventListener('blur', sync);
+    sync();
+  }
+
+  function initNoticeClose(){
+    document.querySelectorAll('.notice-close').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var n = btn.closest('.notice');
+        n.style.transition = 'opacity .18s, transform .18s';
+        n.style.opacity = '0';
+        n.style.transform = 'scale(.97)';
+        setTimeout(function(){ n.remove(); }, 190);
+      });
+    });
+  }
+
+  function initTagClose(){
+    document.querySelectorAll('.tag .tag-x').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var t = btn.closest('.tag');
+        t.classList.add('closing');
+        setTimeout(function(){ t.remove(); }, 190);
+      });
+    });
+  }
+
+  function setProgress(el, pct){
+    var v = Math.max(0, Math.min(100, pct));
+    el.setAttribute('data-value', v);
+    el.querySelector('.progress-fill').style.width = v + '%';
+    return v;
+  }
+
+  function showLoader(text){
+    var l = document.getElementById('loader');
+    document.getElementById('loader-text').textContent = text || '加载中…';
+    l.classList.add('show');
+  }
+  function hideLoader(){ document.getElementById('loader').classList.remove('show'); }
+  window.showLoader = showLoader; window.hideLoader = hideLoader;
+
   /* ---------- 组件预览交互 ---------- */
   document.getElementById('pv-toast-ok').addEventListener('click', function(){ toast('保存成功', 'ok'); });
   document.getElementById('pv-toast-err').addEventListener('click', function(){ toast('操作失败，请重试', 'err'); });
+  var pvSelect = document.getElementById('pv-select');
+  if(pvSelect){
+    var tmp = document.createElement('div');
+    tmp.innerHTML = '<div class="select-option" data-value="ios">iOS 风格</div>'
+      + '<div class="select-option" data-value="md">Material 风格</div>'
+      + '<div class="select-option" data-value="minimal">极简风格</div>'
+      + '<div class="select-option is-disabled" data-value="win">Windows 风格（暂不支持）</div>';
+    pvSelect.appendChild(tmp);
+    var sel = initSelect(pvSelect);
+    sel.onChange(function(v, label){ toast('已选择「' + label + '」', 'ok'); });
+  }
+  document.querySelectorAll('.stepper').forEach(initStepper);
+  initNoticeClose();
+  initTagClose();
+  var pvLoader = document.getElementById('pv-loader');
+  if(pvLoader) pvLoader.addEventListener('click', function(){
+    showLoader('正在处理…');
+    setTimeout(function(){ hideLoader(); toast('处理完成', 'ok'); }, 1400);
+  });
+  var pvProg = document.getElementById('pv-prog');
+  if(pvProg){
+    var pct = 0;
+    setInterval(function(){
+      pct = pct >= 100 ? 0 : pct + 4;
+      var v = setProgress(pvProg, pct);
+      document.getElementById('pv-prog-val').textContent = v + '%';
+    }, 700);
+  }
+
   document.getElementById('pv-dialog').addEventListener('click', function(){
     confirmDialog({
       title:'删除这条记录？', desc:'删除后无法恢复，请确认。', okText:'删除', danger:true,
