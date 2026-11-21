@@ -277,6 +277,30 @@ body.no-label .tab-item span{display:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
 
 .foot-note{text-align:center;font-size:11.5px;opacity:.35;margin:24px 0 10px;}
+
+/* ================= 搜索直达 ================= */
+#search-results{margin-top:12px;}
+#search-results .card{padding:4px 0;margin-bottom:10px;}
+#search-results .row{padding:12px 16px;}
+#search-empty .hint{font-size:13px;opacity:.5;margin-top:6px;}
+
+.row.flash{animation:rowFlash 1.1s ease;}
+@keyframes rowFlash{
+  0%{background:transparent;}
+  18%{background:rgba(120,180,255,.18);}
+  100%{background:transparent;}
+}
+
+/* ================= 系统减弱动效 ================= */
+@media (prefers-reduced-motion: reduce){
+  :root{--ind-anim:none !important;}
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+    scroll-behavior:auto !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -524,7 +548,8 @@ body.no-label .tab-item span{display:none;}
     <!-- 关于 -->
     <div class="group-title">关于</div>
     <div class="liquid-glass card">
-      <div class="row"><span class="row-label">版本</span><span class="row-val">1.3.0</span></div>
+      <div class="row"><span class="row-label">版本</span><span class="row-val">1.3.2</span></div>
+      <div class="row"><span class="row-label">可调配置项</span><span class="row-val" id="conf-count">—</span></div>
       <div class="row tap" id="btn-privacy"><span class="row-label">隐私政策</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
       <div class="row tap" id="btn-terms"><span class="row-label">用户协议</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>
     </div>
@@ -533,17 +558,17 @@ body.no-label .tab-item span{display:none;}
       <div class="row tap center danger" id="btn-logout"><span>退出登录</span></div>
     </div>
 
-    <div class="foot-note">Liquid Glass UI · 风格参考 rdev/liquid-glass-react</div>
+    <div class="foot-note">双击参数名可恢复该项默认值 · Liquid Glass UI · 风格参考 rdev/liquid-glass-react</div>
   </section>
 
   <!-- ===== 视图：搜索 ===== -->
   <section class="view" data-view="search">
-    <div class="page-head"><h1>搜索</h1><p class="page-sub">搜索设置项、应用与内容</p></div>
+    <div class="page-head"><h1>搜索</h1><p class="page-sub">搜索设置项，点击结果直达</p></div>
     <div class="liquid-glass search-input">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg>
-      <input type="text" placeholder="搜索" />
+      <input type="text" id="search-input" placeholder="模糊、圆角、壁纸、色散…" autocomplete="off" />
     </div>
-    <div class="liquid-glass plain-card"><h3>最近搜索</h3><p>液态玻璃 · 导航栏 · 圆角</p></div>
+    <div id="search-results"></div>
   </section>
 </main>
 
@@ -583,6 +608,23 @@ body.no-label .tab-item span{display:none;}
   'use strict';
 
   var STORE_KEY = 'lgSettingsV3';
+  var WALL_KEY = 'lgWallpaperV1';
+
+  /* 深色 / 浅色各存一套玻璃材质参数 */
+  var VARIANT_KEYS = ['tintColor','opacity','blur','saturation','borderAlpha','highlight','grain','shadow','indicatorColor'];
+
+  var DEFAULT_VARIANTS = {
+    dark: {
+      tintColor: '#5a5a5a', opacity: 0.35, blur: 28, saturation: 120,
+      borderAlpha: 0.10, highlight: 0.55, grain: 0.12, shadow: 0.32,
+      indicatorColor: '#328cff'
+    },
+    light: {
+      tintColor: '#f4f4f8', opacity: 0.55, blur: 26, saturation: 135,
+      borderAlpha: 0.18, highlight: 0.78, grain: 0.07, shadow: 0.18,
+      indicatorColor: '#0a84ff'
+    }
+  };
 
   var DEFAULT_CONF = {
     theme: 'dark',
@@ -613,15 +655,30 @@ body.no-label .tab-item span{display:none;}
     wallDim: 0.35,
     indicatorColor: '#328cff',
     indicatorStyle: 'fill',
-    notify: true,
+    notify: false,
     haptic: true,
     motion: true,
     autoHide: true
   };
 
-  var conf = loadConf();
+  function cloneVariants(){
+    var o = {};
+    for(var p in DEFAULT_VARIANTS){
+      if(!DEFAULT_VARIANTS.hasOwnProperty(p)) continue;
+      o[p] = {};
+      for(var i = 0; i < VARIANT_KEYS.length; i++){
+        var k = VARIANT_KEYS[i];
+        o[p][k] = DEFAULT_VARIANTS[p][k];
+      }
+    }
+    return o;
+  }
 
-  function cloneDefaults(){ return JSON.parse(JSON.stringify(DEFAULT_CONF)); }
+  function cloneDefaults(){
+    var o = JSON.parse(JSON.stringify(DEFAULT_CONF));
+    o.variants = cloneVariants();
+    return o;
+  }
 
   function loadConf(){
     try {
@@ -629,15 +686,62 @@ body.no-label .tab-item span{display:none;}
       if(!raw) return cloneDefaults();
       var obj = JSON.parse(raw);
       var merged = cloneDefaults();
-      for(var k in obj){ if(obj.hasOwnProperty(k)) merged[k] = obj[k]; }
+      for(var k in obj){
+        if(!obj.hasOwnProperty(k) || k === 'variants') continue;
+        merged[k] = obj[k];
+      }
+      if(obj.variants && typeof obj.variants === 'object'){
+        for(var p in obj.variants){
+          if(!merged.variants[p] || !obj.variants[p]) continue;
+          for(var i = 0; i < VARIANT_KEYS.length; i++){
+            var vk = VARIANT_KEYS[i];
+            if(obj.variants[p].hasOwnProperty(vk)) merged.variants[p][vk] = obj.variants[p][vk];
+          }
+        }
+      }
       return merged;
     } catch(e){
       return cloneDefaults();
     }
   }
 
+  var conf = loadConf();
+
+  /* 壁纸单独存储：不参与配置序列化，拖动滑块不再重复处理大字符串 */
+  (function(){
+    try {
+      if(conf.wallpaper){
+        localStorage.setItem(WALL_KEY, conf.wallpaper);   /* 旧版本迁移 */
+      } else {
+        conf.wallpaper = localStorage.getItem(WALL_KEY) || '';
+      }
+    } catch(e){ conf.wallpaper = ''; }
+  })();
+
   function saveConf(){
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(conf)); } catch(e){}
+    try {
+      var copy = {};
+      for(var k in conf){
+        if(!conf.hasOwnProperty(k) || k === 'wallpaper') continue;
+        copy[k] = conf[k];
+      }
+      localStorage.setItem(STORE_KEY, JSON.stringify(copy));
+    } catch(e){}
+  }
+
+  /* 写入防抖：拖动滑块时不再逐帧落盘 */
+  var saveTimer = null;
+  function scheduleSave(){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function(){ saveTimer = null; saveConf(); }, 200);
+  }
+
+  function saveWall(data){
+    try {
+      if(data) localStorage.setItem(WALL_KEY, data);
+      else localStorage.removeItem(WALL_KEY);
+      return true;
+    } catch(e){ return false; }
   }
 
   /* ---------- 颜色工具 ---------- */
@@ -744,10 +848,31 @@ body.no-label .tab-item span{display:none;}
 
   /* ---------- 主题 ---------- */
   var mql = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+  var reducedMql = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+
+  function effectiveTheme(){
+    return (conf.theme === 'light' || (conf.theme === 'auto' && mql && mql.matches)) ? 'light' : 'dark';
+  }
+
+  /* 写入材质参数：同时写进「当前主题」那一套，深浅两套互不覆盖 */
+  function setMat(key, val){
+    conf[key] = val;
+    var p = effectiveTheme();
+    if(conf.variants && conf.variants[p]) conf.variants[p][key] = val;
+  }
+
+  function pullVariant(){
+    var p = effectiveTheme();
+    if(!conf.variants || !conf.variants[p]) return;
+    for(var i = 0; i < VARIANT_KEYS.length; i++){
+      var k = VARIANT_KEYS[i];
+      if(conf.variants[p].hasOwnProperty(k)) conf[k] = conf.variants[p][k];
+    }
+  }
 
   function applyTheme(){
-    var light = conf.theme === 'light' || (conf.theme === 'auto' && mql && mql.matches);
-    body.classList.toggle('light', !!light);
+    var light = effectiveTheme() === 'light';
+    body.classList.toggle('light', light);
 
     var idx = conf.theme === 'light' ? 1 : (conf.theme === 'auto' ? 2 : 0);
     themeItems.forEach(function(el, i){ el.classList.toggle('active', i === idx); });
@@ -755,9 +880,14 @@ body.no-label .tab-item span{display:none;}
   }
 
   if(mql){
-    var onScheme = function(){ if(conf.theme === 'auto') applyTheme(); };
+    var onScheme = function(){ if(conf.theme === 'auto') applyConfig(); };
     if(mql.addEventListener) mql.addEventListener('change', onScheme);
     else if(mql.addListener) mql.addListener(onScheme);
+  }
+  if(reducedMql){
+    var onReduce = function(){ applyConfig(); };
+    if(reducedMql.addEventListener) reducedMql.addEventListener('change', onReduce);
+    else if(reducedMql.addListener) reducedMql.addListener(onReduce);
   }
 
   /* ---------- 壁纸 ---------- */
@@ -785,6 +915,7 @@ body.no-label .tab-item span{display:none;}
 
   /* ---------- 应用配置 ---------- */
   function applyConfig(){
+    pullVariant();
     root.style.setProperty('--lg-blur', conf.blur + 'px');
     root.style.setProperty('--lg-opacity', conf.opacity);
     root.style.setProperty('--lg-saturation', conf.saturation + '%');
@@ -812,8 +943,9 @@ body.no-label .tab-item span{display:none;}
     root.style.setProperty('--fs-row', (15 * conf.fontScale).toFixed(1) + 'px');
     root.style.setProperty('--fs-tab', (13 * conf.fontScale).toFixed(1) + 'px');
 
+    var reduce = !!(reducedMql && reducedMql.matches);
     var dur = (0.32 * conf.animSpeed).toFixed(2);
-    root.style.setProperty('--ind-anim', conf.motion
+    root.style.setProperty('--ind-anim', (conf.motion && !reduce)
       ? 'all ' + dur + 's cubic-bezier(.34,1.56,.64,1)'
       : 'none');
 
@@ -876,7 +1008,7 @@ body.no-label .tab-item span{display:none;}
     styleItems.forEach(function(el, i){ el.classList.toggle('active', i === styleIdx); });
     layoutSeg(segIndicator, styleIdx);
 
-    saveConf();
+    scheduleSave();
     requestAnimationFrame(moveIndicator);
   }
 
@@ -915,6 +1047,9 @@ body.no-label .tab-item span{display:none;}
     });
     window.scrollTo({ top:0, behavior:'smooth' });
     moveIndicator();
+    if(name === 'search' && searchInput){
+      setTimeout(function(){ try{ searchInput.focus(); }catch(e){} }, 80);
+    }
   }
 
   navItems.forEach(function(el){
@@ -933,33 +1068,73 @@ body.no-label .tab-item span{display:none;}
   });
 
   /* ---------- 滑块 ---------- */
-  rOpacity.addEventListener('input', function(){ conf.opacity = Number(rOpacity.value); applyConfig(); });
-  rBlur.addEventListener('input', function(){ conf.blur = Number(rBlur.value); applyConfig(); });
-  rSat.addEventListener('input', function(){ conf.saturation = Number(rSat.value); applyConfig(); });
-  rBorder.addEventListener('input', function(){ conf.borderAlpha = Number(rBorder.value); applyConfig(); });
-  rHighlight.addEventListener('input', function(){ conf.highlight = Number(rHighlight.value); applyConfig(); });
-  rChroma.addEventListener('input', function(){ conf.chroma = Number(rChroma.value); applyConfig(); });
-  rGrain.addEventListener('input', function(){ conf.grain = Number(rGrain.value); applyConfig(); });
-  rShadow.addEventListener('input', function(){ conf.shadow = Number(rShadow.value); applyConfig(); });
-  rRadius.addEventListener('input', function(){ conf.radius = Number(rRadius.value); applyConfig(); });
-  rCardRadius.addEventListener('input', function(){ conf.cardRadius = Number(rCardRadius.value); applyConfig(); });
-  rBottom.addEventListener('input', function(){ conf.bottom = Number(rBottom.value); applyConfig(); });
-  rGap.addEventListener('input', function(){ conf.gap = Number(rGap.value); applyConfig(); });
-  rIcon.addEventListener('input', function(){ conf.iconScale = Number(rIcon.value); applyConfig(); });
-  rTabMin.addEventListener('input', function(){ conf.tabMin = Number(rTabMin.value); applyConfig(); });
-  rSpeed.addEventListener('input', function(){ conf.animSpeed = Number(rSpeed.value); applyConfig(); });
-  rFont.addEventListener('input', function(){ conf.fontScale = Number(rFont.value); applyConfig(); });
-  rWallBlur.addEventListener('input', function(){ conf.wallBlur = Number(rWallBlur.value); applyConfig(); });
-  rWallDim.addEventListener('input', function(){ conf.wallDim = Number(rWallDim.value); applyConfig(); });
+  /* 材质类参数走 setMat（写入深浅两套中的当前套），其余直接写 conf */
+  function bindRange(el, key){
+    if(!el) return;
+    el.addEventListener('input', function(){
+      var v = Number(el.value);
+      if(VARIANT_KEYS.indexOf(key) >= 0) setMat(key, v);
+      else conf[key] = v;
+      applyConfig();
+    });
+  }
 
-  cTint.addEventListener('input', function(){ conf.tintColor = cTint.value; applyConfig(); });
-  cIndicator.addEventListener('input', function(){ conf.indicatorColor = cIndicator.value; applyConfig(); });
+  bindRange(rOpacity, 'opacity');
+  bindRange(rBlur, 'blur');
+  bindRange(rSat, 'saturation');
+  bindRange(rBorder, 'borderAlpha');
+  bindRange(rHighlight, 'highlight');
+  bindRange(rChroma, 'chroma');
+  bindRange(rGrain, 'grain');
+  bindRange(rShadow, 'shadow');
+  bindRange(rRadius, 'radius');
+  bindRange(rCardRadius, 'cardRadius');
+  bindRange(rBottom, 'bottom');
+  bindRange(rGap, 'gap');
+  bindRange(rIcon, 'iconScale');
+  bindRange(rTabMin, 'tabMin');
+  bindRange(rSpeed, 'animSpeed');
+  bindRange(rFont, 'fontScale');
+  bindRange(rWallBlur, 'wallBlur');
+  bindRange(rWallDim, 'wallDim');
+
+  cTint.addEventListener('input', function(){ setMat('tintColor', cTint.value); applyConfig(); });
+  cIndicator.addEventListener('input', function(){ setMat('indicatorColor', cIndicator.value); applyConfig(); });
 
   /* ---------- 开关 ---------- */
   switches.forEach(function(el){
     el.addEventListener('click', function(){
       var key = el.getAttribute('data-switch');
       conf[key] = !conf[key];
+
+      /* 通知是真实权限，不是纯装饰 */
+      if(key === 'notify' && conf.notify){
+        if(!('Notification' in window)){
+          conf.notify = false;
+          toast('当前环境不支持系统通知');
+        } else if(Notification.permission === 'denied'){
+          conf.notify = false;
+          toast('通知权限已被系统拒绝，请在浏览器设置中开启');
+        } else if(Notification.permission === 'default'){
+          try {
+            Notification.requestPermission().then(function(p){
+              if(p !== 'granted'){
+                conf.notify = false;
+                applyConfig();
+                toast('未授予通知权限');
+              } else {
+                toast('通知已开启');
+              }
+            });
+          } catch(e){
+            conf.notify = false;
+            toast('通知开启失败');
+          }
+        } else {
+          toast('通知已开启');
+        }
+      }
+
       applyConfig();
       if(conf.haptic && navigator.vibrate){ try{ navigator.vibrate(6); }catch(e){} }
     });
@@ -970,13 +1145,15 @@ body.no-label .tab-item span{display:none;}
 
   /* ---------- 导出 / 导入 ---------- */
   document.getElementById('btn-export').addEventListener('click', function(){
-    var blob = new Blob([JSON.stringify(conf, null, 2)], { type:'application/json' });
+    var copy = {};
+    for(var k in conf){ if(conf.hasOwnProperty(k) && k !== 'wallpaper') copy[k] = conf[k]; }
+    var blob = new Blob([JSON.stringify(copy, null, 2)], { type:'application/json' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url; a.download = 'liquid-glass-config.json';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
-    toast('配置已导出');
+    toast(conf.wallpaper ? '配置已导出（不含壁纸图片）' : '配置已导出');
   });
 
   document.getElementById('btn-import').addEventListener('click', function(){ importFile.click(); });
@@ -987,7 +1164,22 @@ body.no-label .tab-item span{display:none;}
     reader.onload = function(){
       try {
         var obj = JSON.parse(String(reader.result));
-        for(var k in DEFAULT_CONF){ if(obj.hasOwnProperty(k)) conf[k] = obj[k]; }
+        for(var k in DEFAULT_CONF){
+          if(obj.hasOwnProperty(k) && k !== 'wallpaper') conf[k] = obj[k];
+        }
+        if(obj.variants && typeof obj.variants === 'object'){
+          for(var p in obj.variants){
+            if(!conf.variants[p] || !obj.variants[p]) continue;
+            for(var vi = 0; vi < VARIANT_KEYS.length; vi++){
+              var vk = VARIANT_KEYS[vi];
+              if(obj.variants[p].hasOwnProperty(vk)) conf.variants[p][vk] = obj.variants[p][vk];
+            }
+          }
+        }
+        if(obj.wallpaper){
+          conf.wallpaper = obj.wallpaper;
+          saveWall(obj.wallpaper);
+        }
         applyConfig();
         toast('配置导入成功');
       } catch(err){
@@ -1022,13 +1214,14 @@ body.no-label .tab-item span{display:none;}
 
         var data = canvas.toDataURL('image/jpeg', 0.82);
         conf.wallpaper = data;
+        conf.wallPreset = '';
 
-        try {
-          localStorage.setItem(STORE_KEY, JSON.stringify(conf));
+        if(saveWall(data)){
           applyConfig();
           toast('壁纸已应用');
-        } catch(e){
+        } else {
           conf.wallpaper = '';
+          saveWall('');
           applyConfig();
           toast('图片过大，存储空间不足');
         }
@@ -1043,6 +1236,7 @@ body.no-label .tab-item span{display:none;}
   document.getElementById('btn-wall-remove').addEventListener('click', function(){
     conf.wallpaper = '';
     conf.wallPreset = '';
+    saveWall('');
     applyConfig();
     toast('壁纸已移除');
   });
@@ -1053,6 +1247,7 @@ body.no-label .tab-item span{display:none;}
       var key = el.getAttribute('data-preset');
       conf.wallPreset = (conf.wallPreset === key) ? '' : key;
       conf.wallpaper = '';
+      saveWall('');
       applyConfig();
       toast(conf.wallPreset ? ('已应用 ' + key) : '已取消预设');
     });
@@ -1138,7 +1333,7 @@ body.no-label .tab-item span{display:none;}
     try {
       var keys = [];
       for(var i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
-      keys.forEach(function(k){ if(k !== STORE_KEY) localStorage.removeItem(k); });
+      keys.forEach(function(k){ if(k !== STORE_KEY && k !== WALL_KEY) localStorage.removeItem(k); });
       calcCacheSize();
       toast('缓存已清除');
     } catch(e){ toast('清除失败'); }
@@ -1148,6 +1343,138 @@ body.no-label .tab-item span{display:none;}
   document.getElementById('btn-privacy').addEventListener('click', function(){ toast('隐私政策（示例页）'); });
   document.getElementById('btn-terms').addEventListener('click', function(){ toast('用户协议（示例页）'); });
   document.getElementById('btn-logout').addEventListener('click', function(){ toast('已退出登录（演示）'); });
+
+  /* ---------- 设置项索引：搜索直达 + 双击恢复 ------------------ */
+  var settingsView = document.querySelector('.view[data-view="settings"]');
+  var searchInput = document.getElementById('search-input');
+  var searchResults = document.getElementById('search-results');
+
+  var CTRL_KEY = {
+    'r-opacity':'opacity','r-blur':'blur','r-sat':'saturation','r-border':'borderAlpha',
+    'r-highlight':'highlight','r-chroma':'chroma','r-grain':'grain','r-shadow':'shadow',
+    'r-radius':'radius','r-card-radius':'cardRadius','r-bottom':'bottom','r-gap':'gap',
+    'r-icon':'iconScale','r-tabmin':'tabMin','r-speed':'animSpeed','r-font':'fontScale',
+    'r-wall-blur':'wallBlur','r-wall-dim':'wallDim',
+    'c-tint':'tintColor','c-indicator':'indicatorColor'
+  };
+
+  var itemIndex = [];
+
+  function rowLabel(row){
+    var l = row.querySelector('.row-label');
+    if(l) return l.textContent.trim();
+    var h = row.querySelector('.row-head span');
+    return h ? h.textContent.trim() : '';
+  }
+
+  function rowGroup(row){
+    var card = row.closest ? row.closest('.card') : null;
+    var prev = card ? card.previousElementSibling : null;
+    while(prev && !(prev.classList && prev.classList.contains('group-title'))) prev = prev.previousElementSibling;
+    return prev ? prev.textContent.trim() : '其他';
+  }
+
+  function tagRows(){
+    Object.keys(CTRL_KEY).forEach(function(id){
+      var el = document.getElementById(id);
+      if(!el || !el.closest) return;
+      var row = el.closest('.row');
+      if(row) row.setAttribute('data-key', CTRL_KEY[id]);
+    });
+    switches.forEach(function(sw){
+      if(!sw.closest) return;
+      var row = sw.closest('.row');
+      if(row) row.setAttribute('data-key', sw.getAttribute('data-switch'));
+    });
+  }
+
+  function buildIndex(){
+    itemIndex = [];
+    var rows = settingsView.querySelectorAll('.row');
+    for(var i = 0; i < rows.length; i++){
+      var row = rows[i];
+      var label = rowLabel(row);
+      if(!label) continue;
+      itemIndex.push({ label: label, group: rowGroup(row), row: row, key: row.getAttribute('data-key') || '' });
+    }
+  }
+
+  function jumpTo(row){
+    switchView('settings');
+    setTimeout(function(){
+      try { row.scrollIntoView({ block:'center', behavior:'smooth' }); } catch(e){}
+      row.classList.add('flash');
+      setTimeout(function(){ row.classList.remove('flash'); }, 1200);
+    }, 70);
+  }
+
+  function renderSearch(q){
+    if(!searchResults) return;
+    searchResults.innerHTML = '';
+    q = String(q || '').trim().toLowerCase();
+
+    if(!q){
+      searchResults.innerHTML = '<div class="liquid-glass plain-card"><h3>试试搜索</h3><p>模糊 · 圆角 · 壁纸 · 色散 · 指示器 · 动效</p></div>';
+      return;
+    }
+
+    var hits = [];
+    for(var i = 0; i < itemIndex.length; i++){
+      var it = itemIndex[i];
+      if((it.label + ' ' + it.group).toLowerCase().indexOf(q) >= 0) hits.push(it);
+    }
+
+    if(!hits.length){
+      searchResults.innerHTML = '<div class="liquid-glass plain-card" id="search-empty"><h3>没有匹配的设置项</h3><p class="hint">换个关键词试试，例如「模糊」「圆角」「壁纸」</p></div>';
+      return;
+    }
+
+    var card = document.createElement('div');
+    card.className = 'liquid-glass card';
+    hits.forEach(function(it){
+      var row = document.createElement('div');
+      row.className = 'row tap';
+      var nameEl = document.createElement('span');
+      nameEl.className = 'row-label';
+      nameEl.textContent = it.label;
+      var tagEl = document.createElement('span');
+      tagEl.className = 'row-val';
+      tagEl.textContent = it.group;
+      row.appendChild(nameEl);
+      row.appendChild(tagEl);
+      row.addEventListener('click', function(){ jumpTo(it.row); });
+      card.appendChild(row);
+    });
+    searchResults.appendChild(card);
+  }
+
+  if(searchInput){
+    searchInput.addEventListener('input', function(){ renderSearch(searchInput.value); });
+  }
+
+  /* 双击参数名恢复该项默认值 */
+  function resetOne(row){
+    var key = row.getAttribute('data-key');
+    if(!key) return false;
+    var pal = effectiveTheme();
+    var def;
+    if(VARIANT_KEYS.indexOf(key) >= 0 && DEFAULT_VARIANTS[pal]) def = DEFAULT_VARIANTS[pal][key];
+    else def = DEFAULT_CONF[key];
+    if(def === undefined) return false;
+    if(VARIANT_KEYS.indexOf(key) >= 0) setMat(key, def);
+    else conf[key] = def;
+    applyConfig();
+    toast('已恢复默认：' + (rowLabel(row) || key));
+    return true;
+  }
+
+  settingsView.querySelectorAll('.row').forEach(function(row){
+    row.addEventListener('dblclick', function(e){
+      var t = e.target;
+      if(t && t.closest && t.closest('input, .switch, .segmented, .swatches')) return;
+      if(!resetOne(row)) toast('该项暂不支持单独重置');
+    });
+  });
 
   /* ---------- 滚动收起 ---------- */
   var lastScrollY = window.scrollY;
@@ -1162,6 +1489,12 @@ body.no-label .tab-item span{display:none;}
   window.addEventListener('resize', moveIndicator);
 
   /* ---------- 初始化 ---------- */
+  tagRows();
+  buildIndex();
+  renderSearch('');
+  var confCountEl = document.getElementById('conf-count');
+  if(confCountEl) confCountEl.textContent = Object.keys(DEFAULT_CONF).length + ' 项';
+
   applyConfig();
   switchView('settings');
   calcCacheSize();
