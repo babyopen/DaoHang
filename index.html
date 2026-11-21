@@ -83,6 +83,10 @@ body.light{
     inset 0 1px 0 rgba(255,255,255,var(--lg-highlight)),
     0 12px 30px -12px rgba(0,0,0,var(--lg-shadow));
   transition:background .25s,border-color .25s,box-shadow .25s;
+  /* 提升为独立合成层：切换视图时复用已缓存的模糊结果，避免逐帧重建造成闪动 */
+  transform:translateZ(0);
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
 }
 
 /* 双层玻璃背板：内嵌薄壳环 */
@@ -124,9 +128,11 @@ body.light .liquid-glass{
 
 /* ================= 页面容器 ================= */
 main{min-height:100%;padding:0 16px calc(130px + env(safe-area-inset-bottom));}
-.view{display:none;animation:fade .28s ease;}
+.view{display:none;}
 .view.active{display:block;}
-@keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+/* 只给不含玻璃层的标题做入场，避免 backdrop-filter 元素在父级 opacity 动画里逐帧重建 */
+.view.active .page-head{animation:headIn .24s ease both;}
+@keyframes headIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
 
 .page-head{padding:34px 4px 14px;}
 .page-head h1{font-size:30px;font-weight:700;letter-spacing:-.6px;}
@@ -1045,8 +1051,9 @@ body.no-label .tab-item span{display:none;}
     viewSections.forEach(function(sec){
       sec.classList.toggle('active', sec.getAttribute('data-view') === name);
     });
-    window.scrollTo({ top:0, behavior:'smooth' });
-    moveIndicator();
+    /* 立即置顶，不用平滑滚动：滚动过程中背景位移会让所有玻璃层逐帧重新模糊 */
+    window.scrollTo(0, 0);
+    requestAnimationFrame(moveIndicator);
     if(name === 'search' && searchInput){
       setTimeout(function(){ try{ searchInput.focus(); }catch(e){} }, 80);
     }
