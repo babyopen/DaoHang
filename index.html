@@ -159,7 +159,7 @@ main{min-height:100%;padding:0 16px calc(130px + env(safe-area-inset-bottom));}
 .card{overflow:hidden;margin-bottom:4px;}
 
 /* ================= 列表行 ================= */
-.row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 18px;min-height:52px;font-size:var(--fs-row,15px);transition:background .2s;}
+.row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 18px;min-height:52px;font-size:var(--fs-row,15px);transition:background .2s;user-select:none;}
 .row + .row{border-top:1px solid var(--lg-line);}
 .row.tap{cursor:pointer;}
 .row.tap:active{background:rgba(255,255,255,.06);}
@@ -500,7 +500,7 @@ body.light .sheet .sheet-grab{background:rgba(0,0,0,.18);}
       </div>
       <div class="row block">
         <div class="row-head"><span>悬浮高度</span><span class="row-val" id="val-bottom">16 px</span></div>
-        <input type="range" id="r-bottom" min="0" max="40" step="1" />
+        <input type="range" id="r-bottom" min="-40" max="40" step="1" />
       </div>
       <div class="row block">
         <div class="row-head"><span>胶囊间距</span><span class="row-val" id="val-gap">12 px</span></div>
