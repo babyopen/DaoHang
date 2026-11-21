@@ -279,7 +279,8 @@
 
   var btnComponents = document.getElementById('btn-components');
   if(btnComponents) btnComponents.addEventListener('click', function(){ switchView('components'); });
-  /* 返回按钮由 view-settings 的通用绑定统一处理 */
+  var btnBackSettings = document.getElementById('btn-back-settings');
+  if(btnBackSettings) btnBackSettings.addEventListener('click', function(){ switchView('settings'); });
 
   var btnNewModule = document.getElementById('btn-new-module');
   if(btnNewModule) btnNewModule.addEventListener('click', function(){

@@ -432,15 +432,6 @@ body.light .btn.secondary{border-color:rgba(0,0,0,var(--lg-border-a));}
 
 /* 组件库：预览与文档分区（独立视图，与设置项搜索索引无关） */
 .back-btn{margin-bottom:12px;}
-/* iOS 设置式分组：单行卡片 + 组脚注 + 蓝色操作行 */
-.row-card{margin-top:10px;}
-.row-card .row{border-radius:inherit;}
-.group-title{margin-top:24px;}
-.group-note{font-size:12px;line-height:1.6;opacity:.42;padding:9px 20px 0;}
-.group-note:last-of-type{padding-bottom:4px;}
-.row.action .row-label{color:var(--text-active);}
-.row.action .row-val{opacity:.5;}
-.row.tap.danger .row-label{color:#ff453a;}
 .pv-block{padding:14px 16px;border-bottom:1px solid var(--lg-line);}
 .pv-block:last-of-type{border-bottom:none;}
 .pv-label{font-size:12px;font-weight:600;letter-spacing:.3px;opacity:.42;margin-bottom:10px;}
